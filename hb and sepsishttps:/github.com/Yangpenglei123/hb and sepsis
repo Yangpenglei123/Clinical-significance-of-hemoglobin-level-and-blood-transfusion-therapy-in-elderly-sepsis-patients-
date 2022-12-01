@@ -23,6 +23,7 @@ sepsis3=sepsis3[(sepsis3.delt1 <=72) |(sepsis3.delt2 <=24)]
 sepsis3 = sepsis3.drop(labels=['culture_time','antibiotic_time', 'respiration','coagulation', 'liver', 'cardiovascular', 'cns', 
 'renal','sepsis3','delt1','delt2'],axis=1)
 
+
 sepsis3.columns
 # 剔除重复数据
 sepsis3.duplicated(subset = ['subject_id']).sum()
@@ -33,20 +34,28 @@ sepsis3['sepsis'] = 1
 ##合并sepsis
 sepsis_ICU = pd.merge(ICU_patients, sepsis3,how='inner',on = ['subject_id','stay_id'])
 sepsis_ICU.columns
-#####怀疑感染在住ICU前6小时，且不超过24小时
+#####怀疑感染在住ICU前后24小时
 sepsis_ICU['icu_intime'] =  pd.to_datetime(sepsis_ICU['icu_intime'])
 sepsis_ICU['timedelat1'] = (sepsis_ICU.suspected_infection_time -
                              sepsis_ICU.icu_intime).astype('timedelta64[h]')
 sepsis_ICU['timedelat1'] = sepsis_ICU.timedelat1.astype(int)
-sepsis_ICU = sepsis_ICU[(sepsis_ICU.timedelat1 <=24) & (sepsis_ICU.timedelat1 >=-6)]
+sepsis_ICU = sepsis_ICU[(sepsis_ICU.timedelat1 <=24) & (sepsis_ICU.timedelat1 >=-24)]
 sepsis_ICU = sepsis_ICU.drop(labels= ['timedelat1'],axis =1)
 #### sofa 评分在入ICU24h内
 sepsis_ICU['sofa_time'] = pd.to_datetime(sepsis_ICU['sofa_time'] )
 sepsis_ICU['timedelat2']=(sepsis_ICU['sofa_time'] -
                              sepsis_ICU['icu_intime']).astype('timedelta64[h]')
-sepsis_ICU = sepsis_ICU[(sepsis_ICU.timedelat2 <=24) & (sepsis_ICU.timedelat2 >= 0)]
+sepsis_ICU = sepsis_ICU[(sepsis_ICU.timedelat2 <=24) & (sepsis_ICU.timedelat2 >=0)]
 sepsis_ICU = sepsis_ICU.drop(labels= ['timedelat2','sofa_time'],axis =1)
-####删除年龄小于18及住ICU>48小时
+
+### 读取血气信息
+gas = pd.read_csv('D:\hongxiboandsepsis\gas.csv')
+sepsis_ICU = pd.merge(sepsis_ICU,gas,on=['subject_id','stay_id'],how='left')
+sepsis_ICU.columns
+sepsis_ICU.isna().sum()
+sepsis_ICU.dropna(axis = 0,subset=['lactate_max'])
+sepsis_ICU=sepsis_ICU.dropna(axis = 0,subset=['lactate_max'])
+####删除年龄小于65及住ICU>48小时
 sepsis_ICU.columns
 sepsis_ICU = sepsis_ICU.drop(labels=['ethnicity', 'hospstay_seq',
  'first_hosp_stay','icustay_seq','first_icu_stay'],axis=1)
@@ -55,13 +64,18 @@ sepsis_ICU['icu_outtime'] =  pd.to_datetime(sepsis_ICU['icu_outtime'])
 sepsis_ICU['los_icu'] =(sepsis_ICU.icu_outtime - 
                         sepsis_ICU.icu_intime).astype('timedelta64[h]')
 
-sepsis_ICU = sepsis_ICU[(sepsis_ICU.admission_age >= 18)&(sepsis_ICU.los_icu >=48)]
+sepsis_ICU = sepsis_ICU[(sepsis_ICU.admission_age >= 65)&(sepsis_ICU.los_icu>24)]
 sepsis_ICU.columns 
+
+# sepsis_ICU.columns =['subject_id', 'hadm_id', 'stay_id', 'gender', 'dod', 'admittime',
+#       'dischtime', 'los_hospital', 'admission_age', 'hospital_expire_flag',
+#       'icu_intime', 'icu_outtime', 'los_icu', 'suspected_infection_time',
+#       'sofa_score', 'sepsis']
 
 sepsis_ICU.columns =['subject_id', 'hadm_id', 'stay_id', 'gender', 'dod', 'admittime',
        'dischtime', 'los_hospital', 'admission_age', 'hospital_expire_flag',
        'icu_intime', 'icu_outtime', 'los_icu', 'suspected_infection_time',
-       'sofa_score', 'sepsis']
+       'sofa_score', 'sepsis', 'lactate', 'ph', 'po2', 'pco2']
 
 ### 读取实验室检验
 lab = pd.read_csv('D:\hongxiboandsepsis\lab.csv')
@@ -80,10 +94,6 @@ sepsis_ICU.columns
 sepsis_ICU = sepsis_ICU.drop(labels=[ 'albumin', 'd_dimer', 'fibrinogen', 
 'alt', 'ast'], axis=1)
 sepsis_ICU.isna().sum()
-### 读取血气信息
-gas = pd.read_csv('D:\hongxiboandsepsis\gas.csv')
-sepsis_ICU = pd.merge(sepsis_ICU,gas,on=['subject_id','stay_id'],how='left')
-sepsis_ICU.columns
 
 ### 导入24小时内血红蛋白平均值
 mean_hb = pd.read_csv('D:/hongxiboandsepsis/firsthemoglobin.csv')
@@ -112,12 +122,14 @@ sepsis_ICU.columns
 # 删除第红蛋白平均值是缺失值的变量
 sepsis_ICU.dropna(subset=['mean_hb'],inplace=True)
 sepsis_ICU.isna().sum()
-sepsis_ICU.columns = ['subject_id', 'hadm_id', 'stay_id', 'gender','dod' ,'admittime', 'dischtime',
-       'los_hospital', 'admission_age', 'hospital_expire_flag', 'icu_intime',
-       'icu_outtime', 'los_icu', 'suspected_infection_time', 'sofa_score',
-       'sepsis', 'hematocrit', 'hemoglobin', 'hemoglobin_max', 'platelets',
-       'wbc', 'bun', 'creatinine', 'glucose', 'sodium', 'potassium', 'pt',
-       'ptt', 'bilirubin', 'lactate', 'ph', 'po2', 'pco2','mean_hb']
+sepsis_ICU.columns 
+sepsis_ICU.columns = ['subject_id', 'hadm_id', 'stay_id', 'gender', 'dod', 'admittime',
+       'dischtime', 'los_hospital', 'admission_age', 'hospital_expire_flag',
+       'icu_intime', 'icu_outtime', 'los_icu', 'suspected_infection_time',
+       'sofa_score', 'sepsis', 'lactate', 'ph', 'po2', 'pco2', 'hematocrit',
+       'hemoglobin', 'hemoglobin_max', 'platelets', 'wbc', 'bun', 'creatinine',
+       'glucose', 'sodium', 'potassium', 'pt', 'ptt', 'bilirubin', 'mean_hb']
+
 ### 导入生命体征
 vitalsign = pd.read_csv('D:\hongxiboandsepsis\italsign.csv')
 vitalsign.columns
@@ -159,14 +171,17 @@ sepsis_ICU = pd.merge(sepsis_ICU,akipatients,on = ['subject_id', 'hadm_id',
 'stay_id'],how= 'left')
 sepsis_ICU.columns
 sepsis_ICU.loc[sepsis_ICU['aki_stage_creat'] >= 1,'aki_stage_creat']  = 1
-sepsis_ICU.columns = ['subject_id', 'hadm_id', 'stay_id', 'gender', 'dod','admittime', 'dischtime',
-       'los_hospital', 'admission_age', 'hospital_expire_flag', 'icu_intime',
-       'icu_outtime', 'los_icu', 'suspected_infection_time', 'sofa_score',
-       'sepsis', 'hematocrit', 'hemoglobin', 'hemoglobin_max', 'platelets',
-       'wbc', 'bun', 'creatinine', 'glucose', 'sodium', 'potassium', 'pt',
-       'ptt', 'bilirubin', 'lactate', 'ph', 'po2', 'pco2', 'mean_hb','HR', 'SBP', 'DBP',
-       'MBP', 'RR', 'T_min', 'T_max', 'spo2', 'weight', 'height', 'apsiii',
-       'aki']
+
+sepsis_ICU.columns 
+sepsis_ICU.columns = ['subject_id', 'hadm_id', 'stay_id', 'gender', 'dod', 'admittime',
+       'dischtime', 'los_hospital', 'admission_age', 'hospital_expire_flag',
+       'icu_intime', 'icu_outtime', 'los_icu', 'suspected_infection_time',
+       'sofa_score', 'sepsis', 'lactate', 'ph', 'po2', 'pco2', 'hematocrit',
+       'hemoglobin', 'hemoglobin_max', 'platelets', 'wbc', 'bun', 'creatinine',
+       'glucose', 'sodium', 'potassium', 'pt', 'ptt', 'bilirubin', 'mean_hb',
+       'HR', 'SBP', 'DBP', 'MBP', 'RR', 'T_min', 'T_max', 'spo2', 'weight',
+       'height', 'apsiii', 'aki']
+
 ### 血管活性药物
 vaso = pd.read_csv('D:\hongxiboandsepsis\pressin.csv')
 vaso['vaso'] = 1
@@ -242,7 +257,9 @@ diseas = diseas.drop(labels=['liver_diseaseA', 'diabetesA', 'diabetesB',
 diseas.duplicated(subset=['hadm_id']).sum()
 
 sepsis_ICU = pd.merge(sepsis_ICU,diseas,how='left',on = ['subject_id', 'hadm_id'])
-sepsis_ICU.columns
+####剔除基础肾脏、肝脏、呼吸系统疾病患者
+#sepsis_ICU = sepsis_ICU[(sepsis_ICU.Liver==0)&(sepsis_ICU.Renal==0)]
+#sepsis_ICU.columns
 
 #######'hospital_expire_flag'，'gender','aki','vaso', 'sepsis_shock', 'ventil'转换为分类变量
 ############一、category的创建及其性质
@@ -325,12 +342,7 @@ sepsis_ICU1['hematocrit'][(sepsis_ICU1.hematocrit > 55)].count()
 sepsis_ICU1['hematocrit'][(sepsis_ICU1.hematocrit > 55)] = 55
 sepsis_ICU1['hematocrit'][(sepsis_ICU1.hematocrit < 10)].count()
 sepsis_ICU1['hematocrit'][(sepsis_ICU1.hematocrit < 10)] = 55
-##### 'mean_hb'最大值异常值处理
-plt.scatter(x=sepsis_ICU1.hemoglobin, y=sepsis_ICU1.mean_hb)
-sepsis_ICU1['mean_hb'][(sepsis_ICU1.mean_hb > 16)].count()
-sepsis_ICU1 = sepsis_ICU1[(sepsis_ICU1.mean_hb <= 16)]
-sepsis_ICU1['mean_hb'][(sepsis_ICU1.mean_hb < 6)].count()
-sepsis_ICU1 = sepsis_ICU1[(sepsis_ICU1.mean_hb >= 6)]
+
 
 ##### platelets 异常值处理
 sepsis_ICU1['platelets'][(sepsis_ICU1.platelets > 650)].count()
@@ -429,6 +441,11 @@ sepsis_ICU1['BMI'][(sepsis_ICU1.BMI < 15)] = 15
 plt.scatter(x=sepsis_ICU1.apsiii, y=sepsis_ICU1.T_max)
 sepsis_ICU1['apsiii'][(sepsis_ICU1.apsiii > 150)].count()
 sepsis_ICU1['apsiii'][(sepsis_ICU1.apsiii > 150)]=150
+#### lac 异常值处理
+plt.scatter(x=sepsis_ICU1.lactate, y=sepsis_ICU1.T_max)
+sepsis_ICU1['lactate'][(sepsis_ICU1.lactate > 15)].count()
+sepsis_ICU1['lactate'][(sepsis_ICU1.lactate > 15)]=15
+
 
 ########   红细胞分组
 # 根据平均血红蛋白分组
@@ -509,24 +526,55 @@ sepsis_ICUlowhb.head(100)
 ### 仅包括入ICU24小时内血色素
 sepsis_ICUlowhb = sepsis_ICUlowhb[(sepsis_ICUlowhb.timedelat1 <= 24)&
                         (sepsis_ICUlowhb.timedelat1 >=-6)]
-### 保留最低值
+### 合并最低值
 hb_low = sepsis_ICUlowhb.groupby('subject_id',as_index = False)['value'].min()
 hb_low.columns =['subject_id', 'low_hb']
 hb_low.dropna(subset=['low_hb'],inplace=True)
 sepsis_ICU1 = pd.merge(sepsis_ICU1, hb_low,on=['subject_id'],how = 'left')
 sepsis_ICU1.columns
 
+##### 导入HB最大值
+### 导入24小时内最大值平均值
+high_hb = pd.read_csv('D:/hongxiboandsepsis/firsthemoglobin.csv')
+high_hb.columns
+high_hb = high_hb.drop(labels = ['labevent_id','specimen_id', 'itemid','valuenum', 
+'valueuom',  'ref_range_lower', 'ref_range_upper', 'flag', 'priority', 
+'comments' ],axis = 1)
+sepsis_ICUhighb = sepsis_ICU1.copy()
+sepsis_ICUhighb = pd.merge(sepsis_ICU1, high_hb,on=['subject_id'],how='left')
+sepsis_ICUhighb.columns
+sepsis_ICUhighb['charttime'] =  pd.to_datetime(sepsis_ICUhighb['charttime'])
+## 计算血色素测量时间和入ICU时间差
+sepsis_ICUhighb['timedelat1'] = (sepsis_ICUhighb.charttime -sepsis_ICUhighb.icu_intime).astype('timedelta64[h]')
+sepsis_ICUhighb['timedelat1'] = sepsis_ICUhighb.timedelat1.astype(float)
+sepsis_ICUhighb.head(100)
+### 仅包括入ICU24小时内血色素
+sepsis_ICUhighb = sepsis_ICUhighb[(sepsis_ICUhighb.timedelat1 <= 24)&
+                        (sepsis_ICUhighb.timedelat1 >=-6)]
+### 合并最大值
+hb_high = sepsis_ICUhighb.groupby('subject_id',as_index = False)['value'].max()
+hb_high.columns =['subject_id', 'high_hb']
+hb_high.dropna(subset=['high_hb'],inplace=True)
+sepsis_ICU1 = pd.merge(sepsis_ICU1, hb_high,on=['subject_id'],how = 'left')
+sepsis_ICU1.columns
+plt.scatter(x=sepsis_ICU1.hemoglobin, y=sepsis_ICU1.high_hb)
+sepsis_ICU1['mean_hb'][(sepsis_ICU1.high_hb > 17)].count()
+sepsis_ICU1 = sepsis_ICU1[(sepsis_ICU1.high_hb <= 17)]
+sepsis_ICU1['mean_hb'][(sepsis_ICU1.high_hb < 6)].count()
+sepsis_ICU1 = sepsis_ICU1[(sepsis_ICU1.high_hb >= 6)]
+
 sepsis_ICU3 = sepsis_ICU1.copy()
 sepsis_ICU3.columns
 sepsis_ICU3.to_csv('D:/hongxiboandsepsis/shuju.csv')
 
-####################限制性立方模型绘制######################################
 
+####################限制性立方模型绘制######################################
 rm(list = ls())
 library(rms)
 library(survminer)
 library(ggplot2)
 data <- read.csv("D:/hongxiboandsepsis/shuju.csv")
+# data <- data[data$truRed24==0,]
 data$age2 <- 0
 data$age2[data$admission_age >= 65]<-1
 data$BMI2 <- 0
@@ -543,6 +591,14 @@ data$SAPSIII <-0
 data$SAPSIII[data$apsiii >= 60] <- 1
 data$sofa2<- 0 
 data$sofa2[data$sofa_score >=5] <- 1
+data$ph2 <-0
+data$ph2[data$ph <= 7.30] <-1
+data$bun2 <-0
+data$bun2[data$bun >= 30] <-1
+data$lac<-0
+data$lac[data$lactate >= 4] <-1
+
+
 data$age2 <- factor(data$age2,levels=c(0,1),labels = c("<65",">=65"))
 data$BMI2 <- factor(data$BMI2,levels = c(0,1,2),labels =c("<18.5","18.5-25",">25")) 
 data$HR2 <- factor(data$HR2,levels = c(0,1),labels =c("<100",">=100"))
@@ -555,79 +611,80 @@ data$Renal<- factor(data$Rena,levels = c(0,1),labels =c("NO","YES"))
 data$Liver<- factor(data$Liver,levels = c(0,1),labels =c("NO","YES"))
 data$Diabetes<- factor(data$Diabetes,levels = c(0,1),labels =c("NO","YES"))
 data$sepsis_shock <- factor(data$sepsis_shock,levels = c(0,1),labels =c("NO","YES"))
-
+data$ph2 <- factor(data$ph2,levels = c(0,1),labels =c(">7.30","<=7.30"))
+data$bun2 <- factor(data$bun2,levels = c(0,1),labels =c(">=30","<30"))
+data$lac <- factor(data$lac,levels = c(0,1),labels =c("<4",">=4"))
 
 dataA <- datadist(data)
 options(datadist='dataA')
-ggcoxfunctional(Surv(surtime,death28)~Hb,data=data)
-fitsepsis0<- cph(Surv(surtime,death28)~rcs(Hb,3),data=data);anova(fitsepsis0);fitsepsis0
-??cph
-HRsepsis0<- Predict(fitsepsis0,Hb,fun=exp,ref.zero = TRUE);HRsepsis0
+ggcoxfunctional(Surv(surtime,death28)~high_hb,data=data)
+fitsepsis0<- cph(Surv(surtime,death28)~rcs(high_hb,5),data=data);anova(fitsepsis0);fitsepsis0
+HRsepsis0<- Predict(fitsepsis0,high_hb,fun=exp,ref.zero = TRUE);HRsepsis0
 Psepsis0 <- ggplot(HRsepsis0)
 Psepsis0
 Psepsis0<- ggplot()+
    geom_line(data=HRsepsis0,
-            aes(Hb,yhat),
+            aes(high_hb,yhat),
             linetype="solid",
-            size=1,alpha=0.7,
-            colours="red")+
+            size=1,alpha=0.7)+
   geom_ribbon(data=HRsepsis0,
-              aes(Hb,
+              aes(high_hb,
                   ymin=lower,
                   ymax=upper),
-              alpha=0.1,
-              linetype = 2,color="black",size = 0.7,
-              fill="red")+
+              alpha=0.1,fill="red",
+              linetype = 2,color="black",size = 0.7)+
   theme_classic()+
   geom_hline(yintercept = 1,linetype=2,size=1)+
   labs(title="",
        x="Hb(g/L)",
        y="HR(95%CI)");
-Psepsis0 <- Psepsis0 + scale_x_continuous(breaks=seq(0,16,1))+theme(axis.title = element_text(size = 20),axis.text=element_text(size=20))
+Psepsis0 <- Psepsis0 + scale_x_continuous(breaks=seq(6,18,1))+theme(axis.title = element_text(size = 20),axis.text=element_text(size=20))
 Psepsis0 
 
-a <- ggplot()+geom_density(data = data,aes(x=Hb),fill = "#5599FF") + scale_x_continuous(breaks=seq(0,16,1))+
+a <- ggplot()+geom_density(data = data,aes(x=high_hb),fill = "#5599FF") + scale_x_continuous(breaks=seq(6,18,1))+
   scale_y_continuous(position="right")+theme(axis.title = element_text(size = 20),axis.text=element_text(size=20),
 panel.background = element_rect(fill = 'white'))
 a
 ## 模型1 年龄性别体重指数
-fitsepsisA<- cph(Surv(surtime,death28)~rcs(Hb,3)+age2+BMI2+gender,data=data);anova(fitsepsisA);fitsepsisA
+fitsepsisA<- cph(Surv(surtime,death28)~rcs(high_hb,5)+admission_age+BMI2+gender,data=data);anova(fitsepsisA);fitsepsisA
 
-HRsepsisA<- Predict(fitsepsisA,Hb,fun=exp,ref.zero = TRUE);HRsepsisA
+HRsepsisA<- Predict(fitsepsisA,high_hb,fun=exp,ref.zero = TRUE);HRsepsisA
 PsepsisA<- ggplot()+
   geom_line(data=HRsepsisA,
-            aes(Hb,yhat),
+            aes(high_hb,yhat),
             linetype="solid",
             size=1,alpha=0.7,
             colours="red")+
   geom_ribbon(data=HRsepsisA,
-              aes(Hb,
+              aes(high_hb,
                   ymin=lower,
                   ymax=upper),
               alpha=0.1,
+              linetype = 2,color="black",size = 0.7,
               fill="red")+
   theme_classic()+
-  geom_hline(yintercept = 1,linetype=2,size=0.7)+
+  geom_hline(yintercept = 1,linetype=2,size=1)+
   labs(title="",
        x="Hb(g/L)",
        y="HR(95%CI)");
-PsepsisA <- PsepsisA + scale_x_continuous(breaks=seq(0,16,1))+theme(axis.title = element_text(size = 20),axis.text=element_text(size=20))
+PsepsisA <- PsepsisA + scale_x_continuous(breaks=seq(6,18,1))+theme(axis.title = element_text(size = 20),axis.text=element_text(size=20))
 PsepsisA
 
 ## 模型2 模型1基础加上基础疾病
-fitsepsisB<- cph(Surv(surtime,death28)~rcs(Hb,3)+age2+BMI2+gender+COPD+CHF+Renal+Liver+Diabetes,data=data);anova(fitsepsisB);fitsepsisB
+fitsepsisB<- cph(Surv(surtime,death28)~rcs(high_hb,5)+admission_age+BMI2+gender+
+      COPD+CHF+Renal+Liver+Diabetes,data=data);anova(fitsepsisB);fitsepsisB
 
-HRsepsisB<- Predict(fitsepsisB,Hb,fun=exp,ref.zero = TRUE);HRsepsisB
+HRsepsisB<- Predict(fitsepsisB,high_hb,fun=exp,ref.zero = TRUE);HRsepsisB
 PsepsisB <- ggplot(HRsepsisB)
 PsepsisB
 PsepsisB<- ggplot()+
   geom_line(data=HRsepsisB,
-            aes(Hb,yhat),
+            aes(high_hb,yhat),
             linetype="solid",
             size=1,alpha=0.7,
             colours="red")+
   geom_ribbon(data=HRsepsisB,
-              aes(Hb,
+              aes(high_hb,
                   ymin=lower,
                   ymax=upper),
               linetype = 2,color="black",size = 0.7,
@@ -638,21 +695,23 @@ PsepsisB<- ggplot()+
   labs(title="",
        x="Hb(g/L)",
        y="HR(95%CI)");
-PsepsisB<- PsepsisB + scale_x_continuous(breaks=seq(0,16,1))+theme(axis.title = element_text(size = 20),axis.text=element_text(size=20))
+PsepsisB<- PsepsisB + scale_x_continuous(breaks=seq(6,18,1))+theme(axis.title = element_text(size = 20),axis.text=element_text(size=20))
 PsepsisB
 ## 模型3 模型2基础上加上疾病严重程度评分，肝功能，生命体征，凝血肝功能，肾功能，机械通气
-fitsepsisC<- cph(Surv(surtime,death28)~rcs(Hb,3)+age2+BMI2+gender+COPD+CHF+Renal+Diabetes+HR2+MBP2+RR2+pt+ptt+ventil+SAPSIII+sepsis_shock+sofa2 ,data=data);anova(fitsepsisC);fitsepsisC
-HRsepsisC<- Predict(fitsepsisC,Hb,fun=exp,ref.zero = TRUE);HRsepsisC
+fitsepsisC<- cph(Surv(surtime,death28)~rcs(high_hb,4)+admission_age+BMI2+
+                   ph2+gender+CHF+COPD+Renal+Liver+Diabetes+HR2+MBP2+RR2+pt+
+                   ptt+lac+ventil+SAPSIII+sepsis_shock+sofa2 ,data=data);anova(fitsepsisC);fitsepsisC
+HRsepsisC<- Predict(fitsepsisC,high_hb,fun=exp,ref.zero = TRUE);HRsepsisC
 PsepsisC <- ggplot(HRsepsisC)
 PsepsisC
 PsepsisC<- ggplot()+
   geom_line(data=HRsepsisC,
-            aes(Hb,yhat),
+            aes(high_hb,yhat),
             linetype="solid",
             size=1,alpha=0.7,
             colours="red")+
   geom_ribbon(data=HRsepsisC,
-              aes(Hb,
+              aes(high_hb,
                   ymin=lower,
                   ymax=upper),
               linetype = 2,color="black",size = 0.7,
@@ -663,14 +722,14 @@ PsepsisC<- ggplot()+
   labs(title="",
        x="Hb(g/L)",
        y="HR(95%CI)");
-PsepsisC <- PsepsisC + scale_x_continuous(breaks=seq(0,16,1))+theme(axis.title = element_text(size = 20),axis.text=element_text(size=20))
+PsepsisC <- PsepsisC + scale_x_continuous(breaks=seq(6,18,1))+theme(axis.title = element_text(size = 20),axis.text=element_text(size=20))
 PsepsisC
 ################################################## stata 代码 生存分析 #############################################
 import delimited D:\hongxiboandsepsis\shuju.csv
 *连续性变量单因素检验
 tabstat admission_age sofa_score platelets wbc bun creatinine glucose sodium ///
  potassium pt ptt lactate ph po2 pco2 mean_hb hr sbp dbp mbp rr t_max spo2 ///
- apsiii bmi hb low_hb, statistics( p25 p50 p75 mean sd ) by(death28)
+ apsiii bmi high_hb low_hb, statistics( p25 p50 p75 mean sd ) by(death28)
  ttest admission_age, by(death28)
 ttest bmi , by(death28)
 ttest apsiii , by(death28)
@@ -689,7 +748,7 @@ ttest mbp , by(death28)
 ttest hb , by(death28)
 ttest low_hb , by(death28)
  ttest charlson_comorbidity_index, by(death28)
-tabstat charlson_comorbidity_index , statistics( p25 p50 p75 mean sd ) by(death28)
+tabstat charlson_comorbidity_index apsiii, statistics( p25 p50 p75 mean sd ) by(death28)
 *分类变量卡方检验
 tabulate gender death28, chi2 column
 tabulate chf death28, chi2 column
@@ -699,6 +758,7 @@ tabulate renal death28, chi2 column
 tabulate diabetes death28, chi2 column
 tabulate vaso death28, chi2 column
 tabulate ventil death28, chi2 column
+tabulate trured24 death28, chi2 column
 *    整理数据，字符串转变为分类变量
 encode gender,gen (gender_a)
 drop gender
@@ -706,15 +766,15 @@ rename gender_a gender
 rename admission_age age
 rename sofa_score sofa
 * logistic 和COX回归分析 
-* 分三组
- gen sanzu = 1
-replace sanzu = 2 if hb < 10
-replace sanzu = 1 if hb >= 10 & hb <= 11
-replace sanzu = 3 if hb > 11
-label  var sanzu "1 10-11,2 <= 10,3 >11"
-label define sanzu_label  1"10-11"  2"<10" 3">11"
-label values sanzu sanzu_label
-
+* 分四组
+ gen sizu = 0
+replace sizu = 1 if high_hb < 10
+replace sizu = 2 if  high_hb >= 10 & high_hb <= 13
+replace sizu = 3 if  high_hb > 13 & high_hb <= 15
+replace sizu = 4 if high_hb >15
+label  var sizu "1 <10,2 10-13, 3 13-15, 4 >15"
+label define sizu_label  1"<10"  2"10-13" 3"13-15" 4">15"
+label values sizu sizu_label
 
 *  数据转换为分类变量
 gen bmi2 = 0
@@ -722,7 +782,7 @@ replace bmi2 = 0 if bmi < 18.5
 replace bmi2 = 1 if bmi >= 18.5 & bmi <= 25
 replace bmi2 = 3 if bmi  >25
 gen age2 = 0
-replace age2 = 1 if age >= 65
+replace age2 = 1 if age >= 80
 gen rr2 = 0
 replace rr2 = 1 if rr >= 20
 gen hr2 = 0
@@ -733,207 +793,203 @@ gen apsiii2 = 0
 replace apsiii2 = 1 if apsiii >= 60
 gen sofa2 = 0
 replace sofa2 = 1 if sofa >= 5
+gen charlson =0
+replace charlson = 1 if charlson_comorbidity_index >= 5
+gen scr =0 
+replace scr = 1 if creatinine >= 1.5
+gen lac = 0
+replace lac = 1 if lactate >= 4
+
+gen pinxue = 0
+replace pinxue= 1 if high_hb < 12 & gender == 1
+replace pinxue= 1 if high_hb < 11 & gender == 0
+tabulate pinxue death28, chi2 column
  save "D:\hongxiboandsepsis\statafenxishuju.dta", replace
 clear
- * 
 
- 
-* logistic 回归分析
+
+ *  四组组预后
+ * logistic 回归分析
   use "D:\hongxiboandsepsis\statafenxishuju.dta", clear 
+  replace los_icu = los_icu / 24
+  tabulate sizu hospital_expire_flag, chi2 column row
+  tabulate sizu death28, chi2 column row
+  tabulate sizu aki, chi2 column row
+  tabstat sofa, statistics( mean sd p25 p50 p75 ) by(sizu)
+  tabstat lactate, statistics( mean sd p25 p50 p75 ) by(sizu)
+  
 * 未调整模型
-logistic  death28 i.sanzu
+gen verylow = 0
+replace verylow = 1 if high_hb <10
+gen low= 0
+replace low = 1 if high_hb >=10  & high_hb <= 13
+gen norm = 0
+replace norm = 1 if  high_hb >13 & high_hb <= 15
+gen high = 0
+replace high = 1 if  high_hb >15 
+logistic  death28 verylow  norm high
 vif, uncentered
 * model1 年龄 体重指数 +性别
-logistic  death28 i.sanzu age2 bmi2 gender
+logistic  death28 verylow  norm high   age2 bmi2 gender
 vif, uncentered
 *Model2 年龄 体重指数 基础疾病
-logistic  death28 i.sanzu age2 bmi2 gender copd renal diabetes chf
+logistic  death28 verylow  norm high age2 bmi2 gender copd renal diabetes chf liver charlson
+vif, uncentered 
 *model3 年龄 体重指数 基础疾病 血压，机械通气 sapsiii sofa
-logistic  death28 i.sanzu age2 bmi2 gender copd renal diabetes chf hr2  rr2 pt ptt  mbp2 ventil  apsiii2 sofa2  sepsis_shock
+logistic  death28 verylow  norm high age2 bmi2 gender copd renal diabetes liver charlson chf hr2  rr2 pt ptt wbc scr mbp2 ventil  apsiii2 sofa2  lac sepsis_shock
 vif, uncentered
 clear 
-
+**** 四组cox 回顾模型*
  *  cox 回归分析*
   use "D:\hongxiboandsepsis\statafenxishuju.dta", clear 
- 
-gen Hblow10 = 1
-replace Hblow10 =0 if hb >= 10
-gen Hbhigh11 = 1
-replace Hbhigh11 = 0 if hb <= 11 
- stset surtime , failure( death28 ==1)
+gen verylow = 0
+replace verylow = 1 if high_hb <10
+gen low= 0
+replace low = 1 if high_hb >=10  & high_hb <= 13
+gen norm = 0
+replace norm = 1 if  high_hb >13 & high_hb <= 15
+gen high = 0
+replace high = 1 if  high_hb >15 
+stset surtime , failure( death28 ==1)
 * 未调整模型
- stcox  Hblow10  Hbhigh11
-  estat phtest ,detail
- * stcox  Hblow10  Hbhigh12 ,tvc(Hblow10) texp(ln(_t)) 
+stcox verylow  norm high 
+estat phtest ,detail
+
 * model1 年龄 体重指数 +性别
+stcox verylow  norm high   age2 bmi2 gender
+estat phtest ,detail
 
-stcox Hblow10  Hbhigh11  age2 bmi2 gender
- estat phtest ,detail
- 
-* stcox Hblow10  Hbhigh12 age2 bmi2 gender ,tvc(Hblow10) texp(ln(_t)) 
 *Model2 年龄 体重指数 基础疾病
+stcox verylow  norm high  age2 bmi2 gender  copd renal diabetes  chf liver charlson
+estat phtest ,detail
 
-
-stcox Hblow10  Hbhigh11 age2 bmi2 gender  copd renal diabetes  chf
- estat phtest ,detail
-*  stcox Hblow10  Hbhigh11 age2 bmi2 gender  copd renal diabetes  chf
 *model3 年龄 体重指数 基础疾病 血压，机械通气 sapsiii
+stcox verylow  norm high   age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock scr lactate liver charlson 
+estat phtest ,detail
 
 
-stcox Hblow10  Hbhigh11 age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock
- estat phtest ,detail
-* stcox Hblow10  Hbhigh12 age2 i.bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock 
-
- 
-*** 预后分析
-  use "D:\hongxiboandsepsis\statafenxishuju.dta", clear
-drop if low_hb < 7
-drop if low_hb > 11
+*** 输血预后分析
+use "D:\hongxiboandsepsis\statafenxishuju.dta", clear
+ drop if low_hb < 7
+ drop if low_hb > 11
 gen lowfenzu = 1
- replace lowfenzu = 1 if low_hb > 7 & low_hb<= 8
- replace lowfenzu = 2 if low_hb > 8 & low_hb<= 9
- replace lowfenzu = 3 if low_hb > 9 & low_hb<= 10
- replace lowfenzu = 4 if low_hb > 10 & low_hb<= 11
+replace lowfenzu = 1 if low_hb > 7 & low_hb<= 8
+replace lowfenzu = 2 if low_hb > 8 & low_hb<= 9
+replace lowfenzu = 3 if low_hb > 9 & low_hb<= 10
+replace lowfenzu = 4 if low_hb > 10 & low_hb<= 11
+tabulate death28 trured24, chi2 column row
 save "D:\hongxiboandsepsis\statafenxishuju1.dta", replace
+clear
 
 
 *   Hb 7-8g/L
-  use "D:\hongxiboandsepsis\statafenxishuju1.dta", clear
- **   单因素分析   ***
- keep if lowfenzu == 1
- gen midfen = 1
- replace midfen = 2  if sanzu ==2 | sanzu == 3
-tabulate sanzu death28, chi2 column row
+use "D:\hongxiboandsepsis\statafenxishuju1.dta", clear 
+**   单因素分析   ***
+keep if lowfenzu == 1
+gen midfen = 0
+replace midfen = 1  if sizu ==2
 tabulate death28 trured24, chi2 column row
-tabulate sanzu trured24, chi2 column row
+tabulate sizu trured24, chi2 column row
 tabulate midfen trured24, chi2 column row
 ****多因素分析
-stset surtime , failure(  death28 ==1)
-stcox  trured24 age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock
- estat phtest ,detail
- stphplot,by(trured24) adjust( age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock)
- 
-    stcox  trured24 age2 i.bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock ,tvc(trured24) texp(ln(_t)) nohr
-  
-  
-  
+logistic death28  trured24 age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock scr lactate liver charlson 
+vif, uncentered
+lroc
+
  *倾向性匹配分析  ssc  install psmatch2,repalce 	
 use "D:\hongxiboandsepsis\statafenxishuju1.dta", clear
 keep if lowfenzu == 1
 *  生存随机数  *
-  set seed 2022  //生存随机数
-  gen tmp = runiform()   //标准化
-  sort tmp
- psmatch2 trured24 age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock ,outcome( death28 ) ate ties logit common caliper(.05) neighbor(1) quietly 
+set seed 2022  //生存随机数
+gen tmp = runiform()   //标准化
+sort tmp
+ psmatch2 trured24 age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock scr lactate liver charlson  ,outcome( death28 ) ate ties logit common caliper(.05) neighbor(1) quietly 
 *  ICU_dead 分组指标，outcome(结局变量) ate显示  logit logistic回归方法 caliper()卡钳值
 *  neighor（1） 1:1匹配  noreplacement 不放回匹配
-  pstest,both
-  pstest age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock , both graph
-  psgraph
+pstest,both
+pstest age bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock scr lactate liver charlson  , both graph
+psgraph
 drop if _weight ==.
 tabulate trured24  death28, chi2 row
-stset surtime , failure(  death28 ==1)
- stcox  trured24
-stsum
-stdescribe
-sts test trured24
-sts graph, by(trured24)
- export delimited subject_id hadm_id stay_id  trured24 surtime death28 using "D:\hongxiboandsepsis\tu\K-P7-8.csv", replace
-
+logistic death28 trured24
  
 *    Hb 8-9g/L
-   use "D:\hongxiboandsepsis\statafenxishuju1.dta", clear
+use "D:\hongxiboandsepsis\statafenxishuju1.dta", clear
  **   单因素分析   ***
- keep if lowfenzu == 2
- gen midfen = 1
- replace midfen = 2  if sanzu ==2 | sanzu == 3
-tabulate sanzu death28, chi2 column row
+keep if lowfenzu == 2
+gen midfen = 0
+replace midfen = 1  if sizu ==2
+tabulate sizu death28, chi2 column row
 tabulate death28 trured24, chi2 column row
-tabulate sanzu trured24, chi2 column row
+tabulate sizu trured24, chi2 column row
 tabulate midfen trured24, chi2 column row
 ****多因素分析
-stset surtime , failure(  death28 ==1)
-stcox  trured24  age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock
- estat phtest ,detail
- stphplot,by(trured24) adjust( age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock)
- *倾向性匹配分析  ssc  install psmatch2,repalce 	
+logistic death28  trured24 age bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock scr lactate liver charlson  , robust
+vif, uncentered
+lroc
+*倾向性匹配分析  ssc  install psmatch2,repalce 	
 use "D:\hongxiboandsepsis\statafenxishuju1.dta", clear
 keep if lowfenzu == 2
 *  生存随机数  *
-  set seed 2022  //生存随机数
-  gen tmp = runiform()   //标准化
-  sort tmp
- psmatch2 trured24  age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock,outcome( death28 ) ate ties logit common caliper(.05) neighbor(1) quietly 
+set seed 2022  //生存随机数
+gen tmp = runiform()   //标准化
+sort tmp
+psmatch2 trured24  age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock scr lactate liver charlson ,outcome( death28 ) ate ties logit common caliper(.05) neighbor(1) quietly 
 *  ICU_dead 分组指标，outcome(结局变量) ate显示  logit logistic回归方法 caliper()卡钳值
 *  neighor（1） 1:1匹配  noreplacement 不放回匹配
-  pstest,both
-  pstest  age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock , both graph
-  psgraph
+pstest,both
 drop if _weight ==.
-tabulate trured24  death28, chi2 row
-stset surtime , failure(  death28 ==1)
- stcox  trured24
-stsum
-stdescribe
-sts test trured24
-sts graph, by(trured24)
- export delimited subject_id hadm_id stay_id  trured24 surtime death28 using "D:\hongxiboandsepsis\tu\K-P8-9.csv", replace
+pstest  age bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock scr lactate liver charlson  , both graph
+psgraph
+logistic death28 trured24
  
-  
 *    Hb 9-10g/L
-   use "D:\hongxiboandsepsis\statafenxishuju1.dta", clear
+ use "D:\hongxiboandsepsis\statafenxishuju1.dta", clear
  **   单因素分析   ***
- keep if lowfenzu == 3
- gen midfen = 1
- replace midfen = 2  if sanzu ==2 | sanzu == 3
-tabulate sanzu death28, chi2 column row
+keep if lowfenzu == 3
+gen midfen = 0
+replace midfen = 1  if sizu ==2
+tabulate sizu death28, chi2 column row
 tabulate death28 trured24, chi2 column row
-tabulate sanzu trured24, chi2 column row
+tabulate sizu trured24, chi2 column row
 tabulate midfen trured24, chi2 column row
 ****多因素分析
-stset surtime , failure(  death28 ==1)
-stcox  trured24  age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock
- estat phtest ,detail
- stphplot,by(trured24) adjust( age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock)
-   stcox  trured24  age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock   ,tvc(trured24) texp(ln(_t)) 
+logistic death28  trured24 age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock scr lactate liver charlson 
+vif, uncentered
+lroc
+
  *倾向性匹配分析  ssc  install psmatch2,repalce 	
 use "D:\hongxiboandsepsis\statafenxishuju1.dta", clear
 keep if lowfenzu == 3
 *  生存随机数  *
-  set seed 2022  //生存随机数
-  gen tmp = runiform()   //标准化
-  sort tmp
- psmatch2 trured24  age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock,outcome( death28 ) ate ties logit common caliper(.05) neighbor(1) quietly 
+set seed 2222  //生存随机数
+gen tmp = runiform()   //标准化
+sort tmp
+psmatch2 trured24  age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock scr lac liver charlson   ,outcome( death28 ) ate ties logit common caliper(.05) neighbor(1) quietly 
 *  ICU_dead 分组指标，outcome(结局变量) ate显示  logit logistic回归方法 caliper()卡钳值
 *  neighor（1） 1:1匹配  noreplacement 不放回匹配
-  pstest,both
-  pstest  age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock , both graph
-  psgraph
+pstest,both
+pstest  age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock scr lactate liver charlson  , both graph
+psgraph
 drop if _weight ==.
 tabulate trured24  death28, chi2 row
-stset surtime , failure(  death28 ==1)
- stcox  trured24
-stsum
-stdescribe
-sts test trured24
-sts graph, by(trured24)
- export delimited subject_id hadm_id stay_id  trured24 surtime death28 using "D:\hongxiboandsepsis\tu\K-P9-10.csv", replace
- 
+logistic death28  trured24
+
 *    Hb 10-11g/L
-   use "D:\hongxiboandsepsis\statafenxishuju1.dta", clear
+use "D:\hongxiboandsepsis\statafenxishuju1.dta", clear
  **   单因素分析   ***
- keep if lowfenzu == 4
- gen midfen = 1
- replace midfen = 2  if sanzu ==2 | sanzu == 3
-tabulate sanzu death28, chi2 column row
+keep if lowfenzu == 4
+gen midfen = 0
+replace midfen = 1  if sizu ==2
+tabulate sizu death28, chi2 column row
 tabulate death28 trured24, chi2 column row
-tabulate sanzu trured24, chi2 column row
+tabulate sizu trured24, chi2 column row
 tabulate midfen trured24, chi2 column row
 ****多因素分析
-stset surtime , failure(  death28 ==1)
-stcox  trured24  age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock
-estat phtest ,detail
- stphplot,by(trured24) adjust( age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock)
+logistic death28  trured24 age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock scr lactate liver charlson , robust
+vif, uncentered
+lroc
+
  *倾向性匹配分析  ssc  install psmatch2,repalce 	
 use "D:\hongxiboandsepsis\statafenxishuju1.dta", clear
 keep if lowfenzu == 4
@@ -941,114 +997,13 @@ keep if lowfenzu == 4
   set seed 2022  //生存随机数
   gen tmp = runiform()   //标准化
   sort tmp
- psmatch2 trured24  age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock,outcome( death28 ) ate ties logit common caliper(.05) neighbor(1) quietly 
+ psmatch2 trured24  age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock scr lactate liver charlson ,outcome( death28 ) ate ties logit common caliper(.05) neighbor(1) quietly 
 *  ICU_dead 分组指标，outcome(结局变量) ate显示  logit logistic回归方法 caliper()卡钳值
 *  neighor（1） 1:1匹配  noreplacement 不放回匹配
   pstest,both
-  pstest  age2 bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock, both graph
+  pstest  age bmi2 gender  copd renal diabetes chf hr2  rr2 pt ptt mbp2 ventil  apsiii2 sofa2  sepsis_shock scr lactate liver charlson , both graph
   psgraph
 drop if _weight ==.
 tabulate trured24  death28, chi2 row
-stset surtime , failure(  death28 ==1)
- stcox  trured24
-stsum
-stdescribe
-sts test trured24
-sts graph, by(trured24)
- export delimited subject_id hadm_id stay_id  trured24 surtime death28 using "D:\hongxiboandsepsis\tu\K-P10-11.csv", replace
-##################################python 倾向性匹配后生存曲线图#################################
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from lifelines import KaplanMeierFitter
-from lifelines.statistics import logrank_test
-####提取出不同亚组数据
-###7-8 血红蛋白
-sepsis_7_8 = pd.read_csv('D:/hongxiboandsepsis/tu/K-P7-8.csv')
-sepsis_7_8.columns
-KM_HB_7_8_NOT = sepsis_7_8 [(sepsis_7_8.trured24==0)]
-KM_HB_7_8_YES = sepsis_7_8 [(sepsis_7_8.trured24==1)]
-KMFHB_7_8_NOT = KaplanMeierFitter() #调用函数
-KMFHB_7_8_NOT.fit(KM_HB_7_8_NOT.surtime,KM_HB_7_8_NOT.death28)
-KMFHB_7_8_NOT.median_survival_time_
-KMFHB_7_8_YES = KaplanMeierFitter() #调用函数
-KMFHB_7_8_YES.fit(KM_HB_7_8_YES.surtime,KM_HB_7_8_YES.death28)
-KMFHB_7_8_YES.median_survival_time_
-plt.rcParams['figure.figsize'] = (8.0, 6.0)
-plt.ylabel('Percent Survival')
-plt.ylim(0.6, 1)
-plt.xlim(0, 28)
-KMFHB_7_8_NOT.plot(label = 'Not Trans.')
-KMFHB_7_8_YES.plot(label = 'Trans.')
-plt.savefig('D:/hongxiboandsepsis/tu/shengcun7_8.png', dpi=500)
-plt.show()
-log_results = logrank_test(KM_HB_7_8_NOT.surtime,KM_HB_7_8_YES.surtime,
-                          KM_HB_7_8_NOT.death28, KM_HB_7_8_YES.death28)
-log_results.print_summary()
+logistic death28  trured24
 
-
-##8-9
-sepsis_8_9 = pd.read_csv('D:/hongxiboandsepsis/tu/K-P8-9.csv')
-KM_HB_8_9_NOT = sepsis_8_9 [(sepsis_8_9.trured24==0)]
-KM_HB_8_9_YES = sepsis_8_9 [(sepsis_8_9.trured24==1)]
-KMFHB_8_9_NOT = KaplanMeierFitter() #调用函数
-KMFHB_8_9_YES = KaplanMeierFitter() #调用函数
-KMFHB_8_9_NOT.fit(KM_HB_8_9_NOT.surtime,KM_HB_8_9_NOT.death28)
-KMFHB_8_9_NOT.median_survival_time_
-KMFHB_8_9_YES.fit(KM_HB_8_9_YES.surtime,KM_HB_8_9_YES.death28)
-KMFHB_8_9_YES.median_survival_time_
-plt.rcParams['figure.figsize'] = (8.0, 6.0)
-plt.ylabel('Percent Survival')
-plt.ylim(0.6, 1)
-plt.xlim(0, 28)
-KMFHB_8_9_NOT.plot(label = 'Not Trans.')
-KMFHB_8_9_YES.plot(label = 'Trans.')
-plt.savefig('D:/hongxiboandsepsis/tu/shengcun8_9.png', dpi=500)
-plt.show()
-log_results2 = logrank_test(KM_HB_8_9_NOT.surtime,KM_HB_8_9_YES.surtime,
-                          KM_HB_8_9_NOT.death28, KM_HB_8_9_YES.death28)
-log_results2.print_summary()
-
-##9-10
-sepsis_9_10 = pd.read_csv('D:/hongxiboandsepsis/tu/K-P9-10.csv')
-KM_HB_9_10_NOT = sepsis_9_10 [(sepsis_9_10.trured24==0)]
-KM_HB_9_10_YES = sepsis_9_10 [(sepsis_9_10.trured24==1)]
-KMFHB_9_10_NOT = KaplanMeierFitter() #调用函数
-KMFHB_9_10_YES = KaplanMeierFitter() #调用函数
-KMFHB_9_10_NOT.fit(KM_HB_9_10_NOT.surtime,KM_HB_9_10_NOT.death28)
-KMFHB_9_10_NOT.median_survival_time_
-KMFHB_9_10_YES.fit(KM_HB_9_10_YES.surtime,KM_HB_9_10_YES.death28)
-KMFHB_9_10_YES.median_survival_time_
-plt.rcParams['figure.figsize'] = (8.0, 6.0)
-plt.ylabel('Percent Survival')
-plt.ylim(0.6, 1)
-plt.xlim(0, 28)
-KMFHB_9_10_NOT.plot(label = 'Not Trans.')
-KMFHB_9_10_YES.plot(label = 'Trans.')
-plt.savefig('D:/hongxiboandsepsis/tu/shengcun9_10.png', dpi=500)
-plt.show()
-log_results3 = logrank_test(KM_HB_9_10_NOT.surtime,KM_HB_9_10_YES.surtime,
-                          KM_HB_9_10_NOT.death28, KM_HB_9_10_YES.death28)
-log_results3.print_summary()
-
-##10-11
-sepsis_10_11 = pd.read_csv('D:/hongxiboandsepsis/tu/K-P10-11.csv')
-KM_HB_10_11_NOT = sepsis_10_11 [(sepsis_10_11.trured24==0)]
-KM_HB_10_11_YES = sepsis_10_11 [(sepsis_10_11.trured24==1)]
-KMFHB_10_11_NOT = KaplanMeierFitter() #调用函数
-KMFHB_10_11_YES = KaplanMeierFitter() #调用函数
-KMFHB_10_11_NOT.fit(KM_HB_10_11_NOT.surtime,KM_HB_10_11_NOT.death28)
-KMFHB_10_11_NOT.median_survival_time_
-KMFHB_10_11_YES.fit(KM_HB_10_11_YES.surtime,KM_HB_10_11_YES.death28)
-KMFHB_10_11_YES.median_survival_time_
-plt.rcParams['figure.figsize'] = (8.0, 6.0)
-plt.ylabel('Percent Survival')
-plt.ylim(0.5, 1)
-plt.xlim(0, 28)
-KMFHB_10_11_NOT.plot(label = 'Not Trans.')
-KMFHB_10_11_YES.plot(label = 'Trans.')
-plt.savefig('D:/hongxiboandsepsis/tu/shengcun10_11.png', dpi=500)
-plt.show()
-log_results4 = logrank_test(KM_HB_10_11_NOT.surtime,KM_HB_10_11_YES.surtime,
-                          KM_HB_10_11_NOT.death28, KM_HB_10_11_YES.death28)
-log_results4.print_summary()
