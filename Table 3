@@ -1,4 +1,17 @@
 Table - 3
+ * logistic 回归分析
+  use "D:\hongxiboandsepsis\statafenxishuju.dta", clear 
+gen verylow = 0
+replace verylow = 1 if high_hb <10
+gen low= 0
+replace low = 1 if high_hb >=10  & high_hb <= 13
+gen norm = 0
+replace norm = 1 if  high_hb >13 & high_hb <= 15
+gen high = 0
+replace high = 1 if  high_hb >15 
+
+
+
 ****未调整模型
 
 . logistic  death28 verylow  norm high
@@ -112,5 +125,32 @@ sepsis_shock |   2.242214   .1997702     9.06   0.000     1.882952    2.670023
 ------------------------------------------------------------------------------
 Note: _cons estimates baseline odds.
 
+******COXH回归分析
+gen verylow = 0
+replace verylow = 1 if high_hb <10
+gen low= 0
+replace low = 1 if high_hb >=10  & high_hb <= 13
+gen norm = 0
+replace norm = 1 if  high_hb >13 & high_hb <= 15
+gen high = 0
+replace high = 1 if  high_hb >15 
+stset surtime , failure( death28 ==1)
+
+* 未调整模型
+stcox verylow  norm high 
+estat phtest ,detail
+
+No. of subjects =        7,472                  Number of obs    =       7,472
+No. of failures =        1,325
+Time at risk    =  77966.41669
+                                                LR chi2(3)       =       37.55
+Log likelihood  =   -10991.665                  Prob > chi2      =      0.0000
+
+------------------------------------------------------------------------------
+          _t | Haz. Ratio   Std. Err.      z    P>|z|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+     verylow |   1.401471    .089413     5.29   0.000     1.236739    1.588146
+        norm |   1.300615   .1028937     3.32   0.001     1.113804    1.518758
+        high |   1.616172   .2074505     3.74   0.000     1.256689    2.078486
 
 
