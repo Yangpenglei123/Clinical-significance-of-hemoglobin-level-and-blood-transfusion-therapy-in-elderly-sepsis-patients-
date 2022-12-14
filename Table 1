@@ -1,0 +1,40 @@
+Table 1
+import delimited D:\hongxiboandsepsis\shuju.csv
+*连续性变量单因素检验
+tabstat admission_age sofa_score platelets wbc bun creatinine glucose sodium ///
+ potassium pt ptt lactate ph po2 pco2 mean_hb hr sbp dbp mbp rr t_max spo2 ///
+ apsiii bmi high_hb low_hb, statistics( p25 p50 p75 mean sd ) by(death28)
+ ttest admission_age, by(death28)
+ttest bmi , by(death28)
+ttest apsiii , by(death28)
+ttest sofa_score , by(death28)
+ttest mean_hb , by(death28)
+ttest wbc , by(death28)
+ttest creatinine , by(death28)
+ttest bun , by(death28)
+ttest pt , by(death28)
+ttest ptt , by(death28)
+ttest ph , by(death28)
+ttest lactate , by(death28)
+ttest rr , by(death28)
+ttest hr , by(death28)
+ttest mbp , by(death28)
+ttest hb , by(death28)
+ttest po2 , by(death28)
+ttest pco2 , by(death28)
+ttest t_max , by(death28)
+
+
+ttest low_hb , by(death28)
+ ttest charlson_comorbidity_index, by(death28)
+tabstat charlson_comorbidity_index apsiii, statistics( p25 p50 p75 mean sd ) by(death28)
+*分类变量卡方检验
+tabulate gender death28, chi2 column
+tabulate chf death28, chi2 column
+tabulate copd death28, chi2 column
+tabulate liver death28, chi2 column
+tabulate renal death28, chi2 column
+tabulate diabetes death28, chi2 column
+tabulate vaso death28, chi2 column
+tabulate ventil death28, chi2 column
+tabulate trured24 death28, chi2 column
