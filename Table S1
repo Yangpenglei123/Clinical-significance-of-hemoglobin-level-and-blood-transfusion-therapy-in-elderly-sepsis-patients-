@@ -1205,3 +1205,1182 @@ T_min           1.0602372712 0.880089224612024   1.2772604
 T_max           1.0743646903 0.766035572423117   1.5067962
 los_icu         0.9984251475 0.997323251556940   0.9995283 
    
+ ###输血与预后分析
+> #9-10g输血与预后关系
+> # install.packages("MatchIt")
+> # install.packages("tableone")
+> ##多因素分析
+> datalow90 <- data[(data$low_hb>=9)&(data$low_hb<=10),]
+> modellow90 <- glm(death28~truRed24+age2+BMI2+
++                     ph2+gender+Renal+CHF+COPD+Liver+Diabetes+HR2+MBP2+RR2+pt+
++                     ptt+lac+ventil+SAPSIII+sepsis_shock+sofa2+po2+pco2+glucose+potassium+T_min+T_max+los_icu, data=datalow90, family='binomial')
+> summary(modellow90)
+
+Call:
+glm(formula = death28 ~ truRed24 + age2 + BMI2 + ph2 + gender + 
+    Renal + CHF + COPD + Liver + Diabetes + HR2 + MBP2 + RR2 + 
+    pt + ptt + lac + ventil + SAPSIII + sepsis_shock + sofa2 + 
+    po2 + pco2 + glucose + potassium + T_min + T_max + los_icu, 
+    family = "binomial", data = datalow90)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-2.0065  -0.4692  -0.2822  -0.1752   2.8546  
+
+Coefficients:
+                  Estimate Std. Error z value         Pr(>|z|)    
+(Intercept)      5.0738145  4.7245806   1.074         0.282859    
+truRed24YES     -0.4244746  0.2685400  -1.581         0.113952    
+age2>=80         0.4968274  0.1796434   2.766         0.005681 ** 
+BMI218.5-25     -1.3821982  0.4226929  -3.270         0.001076 ** 
+BMI2>25         -1.5327322  0.4098129  -3.740         0.000184 ***
+ph2<=7.30       -0.5557000  0.2052617  -2.707         0.006784 ** 
+genderM         -0.5543370  0.1781850  -3.111         0.001864 ** 
+Renal            0.4449484  0.1908209   2.332         0.019713 *  
+CHFYES           0.0759063  0.1808677   0.420         0.674720    
+COPDYES          0.0458012  0.1864779   0.246         0.805983    
+LiverYES         0.5993621  0.2722368   2.202         0.027692 *  
+DiabetesYES     -0.4040521  0.1923325  -2.101         0.035659 *  
+HR2>=100         0.4507113  0.2171941   2.075         0.037972 *  
+MBP2<=65        -0.0479370  0.2756474  -0.174         0.861939    
+RR2              0.6076421  0.1870808   3.248         0.001162 ** 
+pt               0.0145691  0.0076874   1.895         0.058067 .  
+ptt              0.0100937  0.0025585   3.945 0.00007974981100 ***
+lac>=4           0.2577696  0.2112761   1.220         0.222442    
+ventil           0.7591194  0.2204470   3.444         0.000574 ***
+SAPSIII>=60      1.3895500  0.2012704   6.904 0.00000000000506 ***
+sepsis_shockYES  1.0423014  0.2288413   4.555 0.00000524628028 ***
+sofa2>=5         0.1785893  0.1871140   0.954         0.339860    
+po2             -0.0074549  0.0025012  -2.981         0.002877 ** 
+pco2             0.0111321  0.0063346   1.757         0.078857 .  
+glucose          0.0034070  0.0021925   1.554         0.120205    
+potassium        0.2439366  0.1468140   1.662         0.096606 .  
+T_min           -0.1919795  0.1000764  -1.918         0.055069 .  
+T_max           -0.0508178  0.1161612  -0.437         0.661766    
+los_icu         -0.0023800  0.0006768  -3.517         0.000437 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 1332.94  on 1603  degrees of freedom
+Residual deviance:  959.49  on 1575  degrees of freedom
+AIC: 1017.5
+
+Number of Fisher Scoring iterations: 6
+
+> exp(coef(modellow90))
+    (Intercept)     truRed24YES        age2>=80     BMI218.5-25         BMI2>25       ph2<=7.30         genderM 
+    159.7826548       0.6541134       1.6434988       0.2510261       0.2159449       0.5736706       0.5744530 
+          Renal          CHFYES         COPDYES        LiverYES     DiabetesYES        HR2>=100        MBP2<=65 
+      1.5604097       1.0788615       1.0468663       1.8209569       0.6676093       1.5694281       0.9531938 
+            RR2              pt             ptt          lac>=4          ventil     SAPSIII>=60 sepsis_shockYES 
+      1.8360969       1.0146757       1.0101448       1.2940406       2.1363940       4.0130439       2.8357357 
+       sofa2>=5             po2            pco2         glucose       potassium           T_min           T_max 
+      1.1955296       0.9925728       1.0111943       1.0034128       1.2762634       0.8253238       0.9504519 
+        los_icu 
+      0.9976229 
+> exp(confint(modellow90))
+Waiting for profiling to be done...
+                     2.5 %          97.5 %
+(Intercept)     0.01611351 1840417.5244277
+truRed24YES     0.37981687       1.0911679
+age2>=80        1.15550148       2.3385898
+BMI218.5-25     0.11015407       0.5814644
+BMI2>25         0.09737943       0.4888718
+ph2<=7.30       0.38164153       0.8541369
+genderM         0.40444584       0.8138824
+Renal           1.07124451       2.2653600
+CHFYES          0.75531775       1.5359633
+COPDYES         0.72381153       1.5048206
+LiverYES        1.05784600       3.0820702
+DiabetesYES     0.45571275       0.9694508
+HR2>=100        1.02127449       2.3951016
+MBP2<=65        0.55064546       1.6250830
+RR2             1.27278816       2.6520560
+pt              0.99940907       1.0301344
+ptt             1.00504200       1.0151924
+lac>=4          0.85105162       1.9502510
+ventil          1.39600061       3.3172471
+SAPSIII>=60     2.71554442       5.9841815
+sepsis_shockYES 1.81105872       4.4458775
+sofa2>=5        0.82566304       1.7207549
+po2             0.98750471       0.9972236
+pco2            0.99854355       1.0237032
+glucose         0.99908456       1.0077210
+potassium       0.95819716       1.7045564
+T_min           0.68071274       1.0080928
+T_max           0.75487136       1.1911298
+los_icu         0.99623345       0.9988870
+> exp(cbind(OR = coef(modellow90), confint(modellow90)))
+Waiting for profiling to be done...
+                         OR      2.5 %          97.5 %
+(Intercept)     159.7826548 0.01611351 1840417.5244277
+truRed24YES       0.6541134 0.37981687       1.0911679
+age2>=80          1.6434988 1.15550148       2.3385898
+BMI218.5-25       0.2510261 0.11015407       0.5814644
+BMI2>25           0.2159449 0.09737943       0.4888718
+ph2<=7.30         0.5736706 0.38164153       0.8541369
+genderM           0.5744530 0.40444584       0.8138824
+Renal             1.5604097 1.07124451       2.2653600
+CHFYES            1.0788615 0.75531775       1.5359633
+COPDYES           1.0468663 0.72381153       1.5048206
+LiverYES          1.8209569 1.05784600       3.0820702
+DiabetesYES       0.6676093 0.45571275       0.9694508
+HR2>=100          1.5694281 1.02127449       2.3951016
+MBP2<=65          0.9531938 0.55064546       1.6250830
+RR2               1.8360969 1.27278816       2.6520560
+pt                1.0146757 0.99940907       1.0301344
+ptt               1.0101448 1.00504200       1.0151924
+lac>=4            1.2940406 0.85105162       1.9502510
+ventil            2.1363940 1.39600061       3.3172471
+SAPSIII>=60       4.0130439 2.71554442       5.9841815
+sepsis_shockYES   2.8357357 1.81105872       4.4458775
+sofa2>=5          1.1955296 0.82566304       1.7207549
+po2               0.9925728 0.98750471       0.9972236
+pco2              1.0111943 0.99854355       1.0237032
+glucose           1.0034128 0.99908456       1.0077210
+potassium         1.2762634 0.95819716       1.7045564
+T_min             0.8253238 0.68071274       1.0080928
+T_max             0.9504519 0.75487136       1.1911298
+los_icu           0.9976229 0.99623345       0.9988870
+
+ # 倾向性匹配分析
+> # install.packages("Matching")
+> library(MatchIt)
+> library(tableone)
+> mlow90 <-matchit(data=datalow90,
++                  formula=truRed24~age2+BMI2+
++                    ph2+gender+Renal+CHF+COPD+Liver+Diabetes+HR2+MBP2+RR2+pt+
++                    ptt+lac+ventil+SAPSIII+sepsis_shock+sofa2+po2+pco2+glucose+potassium+T_min+T_max+los_icu,
++                  method="nearest",distance = "logit",replace=FALSE,caliper=0.1,ratio = 1)
+> summary(mlow90)
+
+Call:
+matchit(formula = truRed24 ~ age2 + BMI2 + ph2 + gender + Renal + 
+    CHF + COPD + Liver + Diabetes + HR2 + MBP2 + RR2 + pt + ptt + 
+    lac + ventil + SAPSIII + sepsis_shock + sofa2 + po2 + pco2 + 
+    glucose + potassium + T_min + T_max + los_icu, data = datalow90, 
+    method = "nearest", distance = "logit", replace = FALSE, 
+    caliper = 0.1, ratio = 1)
+
+Summary of Balance for All Data:
+                Means Treated Means Control Std. Mean Diff. Var. Ratio eCDF Mean eCDF Max
+distance               0.2331        0.1349          0.6967     2.1633    0.2191   0.3173
+age2<80                0.6667        0.6422          0.0518          .    0.0244   0.0244
+age2>=80               0.3333        0.3578         -0.0518          .    0.0244   0.0244
+BMI2<18.5              0.0042        0.0293         -0.3906          .    0.0252   0.0252
+BMI218.5-25            0.2083        0.2735         -0.1604          .    0.0651   0.0651
+BMI2>25                0.7875        0.6972          0.2207          .    0.0903   0.0903
+ph2>7.30               0.4458        0.6144         -0.3391          .    0.1685   0.1685
+ph2<=7.30              0.5542        0.3856          0.3391          .    0.1685   0.1685
+genderF                0.3250        0.4113         -0.1842          .    0.0863   0.0863
+genderM                0.6750        0.5887          0.1842          .    0.0863   0.0863
+Renal                  0.2042        0.2595         -0.1373          .    0.0554   0.0554
+CHFNO                  0.6750        0.6459          0.0621          .    0.0291   0.0291
+CHFYES                 0.3250        0.3541         -0.0621          .    0.0291   0.0291
+COPDNO                 0.6875        0.7053         -0.0384          .    0.0178   0.0178
+COPDYES                0.3125        0.2947          0.0384          .    0.0178   0.0178
+LiverNO                0.8792        0.9326         -0.1638          .    0.0534   0.0534
+LiverYES               0.1208        0.0674          0.1638          .    0.0534   0.0534
+DiabetesNO             0.6417        0.6261          0.0325          .    0.0156   0.0156
+DiabetesYES            0.3583        0.3739         -0.0325          .    0.0156   0.0156
+HR2<100                0.8542        0.8629         -0.0248          .    0.0087   0.0087
+HR2>=100               0.1458        0.1371          0.0248          .    0.0087   0.0087
+MBP2>65                0.8917        0.9142         -0.0726          .    0.0226   0.0226
+MBP2<=65               0.1083        0.0858          0.0726          .    0.0226   0.0226
+RR2                    0.2167        0.3651         -0.3603          .    0.1484   0.1484
+pt                    16.6663       17.3245         -0.1045     0.4478    0.0304   0.0940
+ptt                   45.4608       43.4362          0.0705     1.0074    0.0363   0.1145
+lac<4                  0.7000        0.8328         -0.2899          .    0.1328   0.1328
+lac>=4                 0.3000        0.1672          0.2899          .    0.1328   0.1328
+ventil                 0.7917        0.6459          0.3589          .    0.1458   0.1458
+SAPSIII<60             0.6250        0.6268         -0.0038          .    0.0018   0.0018
+SAPSIII>=60            0.3750        0.3732          0.0038          .    0.0018   0.0018
+sepsis_shockNO         0.7417        0.8585         -0.2669          .    0.1168   0.1168
+sepsis_shockYES        0.2583        0.1415          0.2669          .    0.1168   0.1168
+sofa2<5                0.6792        0.7471         -0.1455          .    0.0679   0.0679
+sofa2>=5               0.3208        0.2529          0.1455          .    0.0679   0.0679
+po2                   96.9167       97.6437         -0.0173     0.7720    0.0190   0.0770
+pco2                  49.4833       47.8629          0.1452     0.7002    0.0322   0.1220
+glucose              121.2417      118.3849          0.0839     0.8664    0.0163   0.0770
+potassium              4.0471        3.9672          0.1577     0.8108    0.0208   0.0833
+T_min                 35.8547       36.1180         -0.2991     1.1700    0.0564   0.1633
+T_max                 37.4596       37.4621         -0.0034     0.9637    0.0100   0.0503
+los_icu              136.8167      108.1598          0.1671     1.7139    0.0478   0.1241
+
+
+Summary of Balance for Matched Data:
+                Means Treated Means Control Std. Mean Diff. Var. Ratio eCDF Mean eCDF Max Std. Pair Dist.
+distance               0.2154        0.2146          0.0054     1.0185    0.0010   0.0268          0.0083
+age2<80                0.6741        0.6518          0.0474          .    0.0223   0.0223          0.9944
+age2>=80               0.3259        0.3482         -0.0474          .    0.0223   0.0223          0.9944
+BMI2<18.5              0.0045        0.0000          0.0693          .    0.0045   0.0045          0.0693
+BMI218.5-25            0.2098        0.2277         -0.0440          .    0.0179   0.0179          0.9014
+BMI2>25                0.7857        0.7723          0.0327          .    0.0134   0.0134          0.9058
+ph2>7.30               0.4643        0.4821         -0.0359          .    0.0179   0.0179          0.8083
+ph2<=7.30              0.5357        0.5179          0.0359          .    0.0179   0.0179          0.8083
+genderF                0.3348        0.3616         -0.0572          .    0.0268   0.0268          0.8578
+genderM                0.6652        0.6384          0.0572          .    0.0268   0.0268          0.8578
+Renal                  0.2098        0.2188         -0.0222          .    0.0089   0.0089          0.8639
+CHFNO                  0.6786        0.6786          0.0000          .    0.0000   0.0000          0.4107
+CHFYES                 0.3214        0.3214          0.0000          .    0.0000   0.0000          0.4107
+COPDNO                 0.6830        0.7143         -0.0674          .    0.0312   0.0312          0.9150
+COPDYES                0.3170        0.2857          0.0674          .    0.0312   0.0312          0.9150
+LiverNO                0.8839        0.8750          0.0274          .    0.0089   0.0089          0.5479
+LiverYES               0.1161        0.1250         -0.0274          .    0.0089   0.0089          0.5479
+DiabetesNO             0.6429        0.6518         -0.0186          .    0.0089   0.0089          0.8565
+DiabetesYES            0.3571        0.3482          0.0186          .    0.0089   0.0089          0.8565
+HR2<100                0.8482        0.8795         -0.0885          .    0.0312   0.0312          0.6704
+HR2>=100               0.1518        0.1205          0.0885          .    0.0312   0.0312          0.6704
+MBP2>65                0.8973        0.8973          0.0000          .    0.0000   0.0000          0.1964
+MBP2<=65               0.1027        0.1027          0.0000          .    0.0000   0.0000          0.1964
+RR2                    0.2277        0.1875          0.0975          .    0.0402   0.0402          0.7260
+pt                    16.6330       17.4625         -0.1317     0.7933    0.0259   0.0670          0.8146
+ptt                   44.1978       45.1424         -0.0329     0.8511    0.0224   0.0670          0.8563
+lac<4                  0.7321        0.7277          0.0097          .    0.0045   0.0045          0.6917
+lac>=4                 0.2679        0.2723         -0.0097          .    0.0045   0.0045          0.6917
+ventil                 0.7768        0.7723          0.0110          .    0.0045   0.0045          0.6706
+SAPSIII<60             0.6339        0.6205          0.0277          .    0.0134   0.0134          1.0051
+SAPSIII>=60            0.3661        0.3795         -0.0277          .    0.0134   0.0134          1.0051
+sepsis_shockNO         0.7679        0.7812         -0.0306          .    0.0134   0.0134          0.6425
+sepsis_shockYES        0.2321        0.2188          0.0306          .    0.0134   0.0134          0.6425
+sofa2<5                0.7009        0.6652          0.0765          .    0.0357   0.0357          0.8990
+sofa2>=5               0.2991        0.3348         -0.0765          .    0.0357   0.0357          0.8990
+po2                   96.5580       96.6518         -0.0022     0.9967    0.0151   0.0580          0.9900
+pco2                  49.5134       48.2589          0.1124     1.0381    0.0181   0.1161          0.9452
+glucose              120.6473      120.0580          0.0173     0.8021    0.0110   0.0580          1.0929
+potassium              4.0424        4.0705         -0.0556     0.8011    0.0111   0.0670          1.1719
+T_min                 35.8881       35.9028         -0.0167     0.8592    0.0137   0.0491          0.9144
+T_max                 37.4595       37.4888         -0.0401     1.0900    0.0131   0.0625          1.1019
+los_icu              126.7857      131.2009         -0.0257     0.6611    0.0275   0.1473          0.7235
+
+Percent Balance Improvement:
+                Std. Mean Diff. Var. Ratio eCDF Mean eCDF Max
+distance                   99.2       97.6      99.5     91.6
+age2<80                     8.7          .       8.7      8.7
+age2>=80                    8.7          .       8.7      8.7
+BMI2<18.5                  82.3          .      82.3     82.3
+BMI218.5-25                72.6          .      72.6     72.6
+BMI2>25                    85.2          .      85.2     85.2
+ph2>7.30                   89.4          .      89.4     89.4
+ph2<=7.30                  89.4          .      89.4     89.4
+genderF                    69.0          .      69.0     69.0
+genderM                    69.0          .      69.0     69.0
+Renal                      83.9          .      83.9     83.9
+CHFNO                     100.0          .     100.0    100.0
+CHFYES                    100.0          .     100.0    100.0
+COPDNO                    -75.8          .     -75.8    -75.8
+COPDYES                   -75.8          .     -75.8    -75.8
+LiverNO                    83.3          .      83.3     83.3
+LiverYES                   83.3          .      83.3     83.3
+DiabetesNO                 42.6          .      42.6     42.6
+DiabetesYES                42.6          .      42.6     42.6
+HR2<100                  -257.7          .    -257.7   -257.7
+HR2>=100                 -257.7          .    -257.7   -257.7
+MBP2>65                   100.0          .     100.0    100.0
+MBP2<=65                  100.0          .     100.0    100.0
+RR2                        72.9          .      72.9     72.9
+pt                        -26.0       71.2      14.6     28.8
+ptt                        53.3    -2073.5      38.2     41.5
+lac<4                      96.6          .      96.6     96.6
+lac>=4                     96.6          .      96.6     96.6
+ventil                     96.9          .      96.9     96.9
+SAPSIII<60               -630.7          .    -630.7   -630.7
+SAPSIII>=60              -630.7          .    -630.7   -630.7
+sepsis_shockNO             88.5          .      88.5     88.5
+sepsis_shockYES            88.5          .      88.5     88.5
+sofa2<5                    47.4          .      47.4     47.4
+sofa2>=5                   47.4          .      47.4     47.4
+po2                        87.1       98.7      20.6     24.6
+pco2                       22.6       89.5      43.7      4.9
+glucose                    79.4      -53.7      32.4     24.7
+potassium                  64.8       -5.8      46.9     19.7
+T_min                      94.4        3.4      75.7     69.9
+T_max                   -1067.6     -133.3     -30.9    -24.2
+los_icu                    84.6       23.2      42.5    -18.7
+
+Sample Sizes:
+          Control Treated
+All          1364     240
+Matched       224     224
+Unmatched    1140      16
+Discarded       0       0
+
+> #提取匹配后病例对照
+> set.seed(1111)
+> mlowdata90 <- match.data(mlow90,group = "all",
++                          distance = "distance",
++                          weights = "weights",
++                          subclass= "subclass",
++                          data = NULL,
++                          include.s.weights = TRUE,
++                          drop.unmatched = TRUE)
+> modelmlow90 <- glm(death28~truRed24, data=mlowdata90, family='binomial')
+> summary(modelmlow90)
+
+Call:
+glm(formula = death28 ~ truRed24, family = "binomial", data = mlowdata90)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-0.6009  -0.6009  -0.4968  -0.4968   2.0754  
+
+Coefficients:
+            Estimate Std. Error z value            Pr(>|z|)    
+(Intercept)  -1.6202     0.1799  -9.005 <0.0000000000000002 ***
+truRed24YES  -0.4100     0.2755  -1.488               0.137    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 363.86  on 447  degrees of freedom
+Residual deviance: 361.62  on 446  degrees of freedom
+AIC: 365.62
+
+Number of Fisher Scoring iterations: 4
+
+> exp(coef(modelmlow90))
+(Intercept) truRed24YES 
+  0.1978610   0.6636637 
+> exp(confint(modelmlow90))
+Waiting for profiling to be done...
+                2.5 %    97.5 %
+(Intercept) 0.1369931 0.2779223
+truRed24YES 0.3834720 1.1339530
+> exp(cbind(OR = coef(modelmlow90), confint(modelmlow90)))
+Waiting for profiling to be done...
+                   OR     2.5 %    97.5 %
+(Intercept) 0.1978610 0.1369931 0.2779223
+truRed24YES 0.6636637 0.3834720 1.1339530
+
+#建立模型计算PS
+> psModel90=glm(truRed24~age2+BMI2+
++                 ph2+gender+Renal+CHF+COPD+Liver+Diabetes+HR2+MBP2+RR2+pt+
++                 ptt+lac+ventil+SAPSIII+sepsis_shock+sofa2+po2+pco2+glucose+potassium+T_min+T_max+los_icu,family = quasibinomial(link = "logit"),data = datalow90)
+> datalow90$ps = predict(psModel90,type = "response") #预测每位患者倾向性
+> #逆概率加权
+> datalow90$wt1 = 1/datalow90$ps  #输血组权重
+> datalow90$wt2 = 1/(1-datalow90$ps) #未输血组权重
+> #输血组权重为wt1未输血组权重为wt2
+> datalow90$w <- ifelse(datalow90$truRed24=="YES",datalow90$wt1,datalow90$wt2)
+> > #ITPW后的数据做table
+> # install.packages("survey")
+> library(survey)
+> library(tableone)
+> dataIPTW90=svydesign(ids=~subject_id,data=datalow90,weights=~w) #提取ITPW后数据
+> #2再次构建Table-1模型
+> vars=c("age2" ,"BMI2" ,"ph2" ,"gender", "Renal" ,"CHF", "COPD" ,"Liver" ,"Diabetes", 
++        "HR", "MBP2","RR2","pt","ptt","lac"," ventil", "SAPSIII",
++        "sepsis_shock","sofa2","po2","pco2", "glucose","potassium","T_min","T_max","los_icu")
+> 
+> tab_IPTW90=svyCreateTableOne(vars=vars,strata="truRed24",data=dataIPTW90,test=T)
+Warning message:
+In ModuleReturnVarsExist(vars, data$variables) :
+  The data frame does not have:  ventil  Dropped
+> print(tab_IPTW90,showAllLevels=TRUE,smd=TRUE)
+                       Stratified by truRed24
+                        level   NO               YES              p      test SMD   
+  n                              1602.3           1654.0                            
+  age2 (%)              <80      1036.4 (64.7)    1103.4 (66.7)    0.665       0.043
+                        >=80      565.9 (35.3)     550.7 (33.3)                     
+  BMI2 (%)              <18.5      40.9 ( 2.6)       7.4 ( 0.4)    0.150       0.190
+                        18.5-25   424.7 (26.5)     505.2 (30.5)                     
+                        >25      1136.7 (70.9)    1141.4 (69.0)                     
+  ph2 (%)               >7.30     948.3 (59.2)    1050.1 (63.5)    0.296       0.088
+                        <=7.30    654.0 (40.8)     603.9 (36.5)                     
+  gender (%)            F         640.3 (40.0)     716.6 (43.3)    0.481       0.068
+                        M         962.0 (60.0)     937.4 (56.7)                     
+  Renal (mean (SD))                0.25 (0.43)      0.25 (0.44)    0.938       0.008
+  CHF (%)               NO       1043.5 (65.1)    1065.5 (64.4)    0.883       0.015
+                        YES       558.8 (34.9)     588.5 (35.6)                     
+  COPD (%)              NO       1124.0 (70.1)    1239.1 (74.9)    0.203       0.107
+                        YES       478.4 (29.9)     414.9 (25.1)                     
+  Liver (%)             NO       1482.8 (92.5)    1514.1 (91.5)    0.690       0.037
+                        YES       119.5 ( 7.5)     140.0 ( 8.5)                     
+  Diabetes (%)          NO       1008.1 (62.9)    1093.6 (66.1)    0.461       0.067
+                        YES       594.2 (37.1)     560.4 (33.9)                     
+  HR (mean (SD))                  84.29 (13.99)    84.14 (13.02)   0.896       0.011
+  MBP2 (%)              >65      1459.1 (91.1)    1508.1 (91.2)    0.959       0.004
+                        <=65      143.2 ( 8.9)     145.9 ( 8.8)                     
+  RR2 (mean (SD))                  0.34 (0.47)      0.37 (0.48)    0.541       0.065
+  pt (mean (SD))                  17.24 (9.06)     17.27 (9.54)    0.976       0.003
+  ptt (mean (SD))                 43.64 (28.71)    42.18 (26.00)   0.518       0.053
+  lac (%)               <4       1306.1 (81.5)    1363.9 (82.5)    0.748       0.025
+                        >=4       296.2 (18.5)     290.1 (17.5)                     
+  SAPSIII (%)           <60      1006.5 (62.8)    1101.4 (66.6)    0.389       0.079
+                        >=60      595.8 (37.2)     552.6 (33.4)                     
+  sepsis_shock (%)      NO       1349.5 (84.2)    1391.6 (84.1)    0.975       0.002
+                        YES       252.8 (15.8)     262.5 (15.9)                     
+  sofa2 (%)             <5       1183.3 (73.8)    1229.6 (74.3)    0.897       0.011
+                        >=5       419.0 (26.2)     424.4 (25.7)                     
+  po2 (mean (SD))                 97.63 (46.97)   102.72 (61.71)   0.528       0.093
+  pco2 (mean (SD))                48.06 (13.24)    46.81 (10.65)   0.206       0.104
+  glucose (mean (SD))            118.72 (36.83)   117.80 (31.92)   0.740       0.027
+  potassium (mean (SD))            3.98 (0.56)      3.97 (0.51)    0.841       0.019
+  T_min (mean (SD))               36.07 (0.94)     36.08 (0.79)    0.876       0.013
+  T_max (mean (SD))               37.46 (0.75)     37.49 (0.76)    0.752       0.032
+  los_icu (mean (SD))            111.73 (141.60)  107.22 (122.31)  0.634       0.034
+> addmargins(table(ExtractSmd(tab_IPTW90)>0.1))
+
+FALSE  TRUE   Sum 
+   22     3    25
+   
+   > #拟合逆概率加权后输血和28天死亡风险
+> modelIPTW90 <-glm(death28~truRed24,family = quasibinomial(link = "logit"),data = datalow90,weight=w)
+> summary(modelIPTW90)
+
+Call:
+glm(formula = death28 ~ truRed24, family = quasibinomial(link = "logit"), 
+    data = datalow90, weights = w)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-3.9803  -0.6482  -0.6098  -0.5879   9.4271  
+
+Coefficients:
+            Estimate Std. Error t value            Pr(>|t|)    
+(Intercept) -1.71815    0.09918 -17.324 <0.0000000000000002 ***
+truRed24YES -0.27452    0.14655  -1.873              0.0612 .  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for quasibinomial family taken to be 2.032684)
+
+    Null deviance: 2587.1  on 1603  degrees of freedom
+Residual deviance: 2580.0  on 1602  degrees of freedom
+AIC: NA
+
+Number of Fisher Scoring iterations: 6
+
+> exp(coef(modelIPTW90))
+(Intercept) truRed24YES 
+  0.1793984   0.7599397 
+> exp(confint(modelIPTW90))
+Waiting for profiling to be done...
+                2.5 %    97.5 %
+(Intercept) 0.1470329 0.2169743
+truRed24YES 0.5694222 1.0120380
+> exp(cbind(OR = coef(modelIPTW90), confint(modelIPTW90)))
+Waiting for profiling to be done...
+                   OR     2.5 %    97.5 %
+(Intercept) 0.1793984 0.1470329 0.2169743
+truRed24YES 0.7599397 0.5694222 1.0120380
+> #双重稳健模型与28天死亡风险
+> #拟合逆概率加权后输血和28天死亡风险
+> ipw_svydesign90 <- svydesign(ids = ~ subject_id, weights = ~ w, data = datalow90)
+> modelDB90 <-svyglm(death28~truRed24+age2+BMI2+
++                      ph2+gender+Renal+CHF+COPD+Liver+Diabetes+HR2+MBP2+RR2+pt+
++                      ptt+lac+ventil+SAPSIII+sepsis_shock+sofa2+po2+pco2+glucose+potassium+T_min+T_max+los_icu,family = quasibinomial,design=ipw_svydesign90)
+> summary(modelDB90)
+
+Call:
+svyglm(formula = death28 ~ truRed24 + age2 + BMI2 + ph2 + gender + 
+    Renal + CHF + COPD + Liver + Diabetes + HR2 + MBP2 + RR2 + 
+    pt + ptt + lac + ventil + SAPSIII + sepsis_shock + sofa2 + 
+    po2 + pco2 + glucose + potassium + T_min + T_max + los_icu, 
+    design = ipw_svydesign90, family = quasibinomial)
+
+Survey design:
+svydesign(ids = ~subject_id, weights = ~w, data = datalow90)
+
+Coefficients:
+                  Estimate Std. Error t value         Pr(>|t|)    
+(Intercept)      1.5666950  7.3320515   0.214         0.830826    
+truRed24YES     -0.1877502  0.2873830  -0.653         0.513652    
+age2>=80         0.6343763  0.2671871   2.374         0.017703 *  
+BMI218.5-25     -1.2867496  0.5661276  -2.273         0.023167 *  
+BMI2>25         -1.4787488  0.5447227  -2.715         0.006706 ** 
+ph2<=7.30       -0.6038587  0.2650727  -2.278         0.022855 *  
+genderM         -0.4735117  0.2555948  -1.853         0.064129 .  
+Renal            0.1401786  0.2882951   0.486         0.626870    
+CHFYES           0.0567292  0.2545792   0.223         0.823693    
+COPDYES          0.0728304  0.2544782   0.286         0.774766    
+LiverYES         0.8486137  0.3465244   2.449         0.014437 *  
+DiabetesYES     -0.3089398  0.2674744  -1.155         0.248255    
+HR2>=100         0.3488363  0.4073498   0.856         0.391931    
+MBP2<=65         0.2643659  0.3483574   0.759         0.448030    
+RR2              0.4362091  0.2673529   1.632         0.102967    
+pt               0.0396446  0.0122899   3.226         0.001282 ** 
+ptt              0.0132684  0.0034796   3.813         0.000142 ***
+lac>=4           0.0711699  0.2529824   0.281         0.778499    
+ventil           0.5910986  0.3025679   1.954         0.050925 .  
+SAPSIII>=60      2.0821647  0.2965976   7.020 0.00000000000328 ***
+sepsis_shockYES  0.9145262  0.2773649   3.297         0.000998 ***
+sofa2>=5        -0.0279173  0.2417843  -0.115         0.908092    
+po2             -0.0084000  0.0033667  -2.495         0.012698 *  
+pco2             0.0116885  0.0092661   1.261         0.207343    
+glucose          0.0034316  0.0025766   1.332         0.183106    
+potassium        0.4595501  0.2191273   2.097         0.036136 *  
+T_min           -0.2068922  0.1131460  -1.829         0.067657 .  
+T_max            0.0130406  0.1825324   0.071         0.943054    
+los_icu         -0.0027456  0.0008062  -3.406         0.000677 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for quasibinomial family taken to be 0.8747906)
+
+Number of Fisher Scoring iterations: 6
+
+> exp(coef(modelDB90))
+    (Intercept)     truRed24YES        age2>=80     BMI218.5-25         BMI2>25       ph2<=7.30         genderM 
+      4.7907883       0.8288218       1.8858456       0.2761670       0.2279227       0.5466980       0.6228113 
+          Renal          CHFYES         COPDYES        LiverYES     DiabetesYES        HR2>=100        MBP2<=65 
+      1.1504792       1.0583692       1.0755481       2.3364056       0.7342250       1.4174172       1.3026047 
+            RR2              pt             ptt          lac>=4          ventil     SAPSIII>=60 sepsis_shockYES 
+      1.5468322       1.0404409       1.0133568       1.0737637       1.8059714       8.0218152       2.4955926 
+       sofa2>=5             po2            pco2         glucose       potassium           T_min           T_max 
+      0.9724688       0.9916352       1.0117571       1.0034375       1.5833614       0.8131073       1.0131260 
+        los_icu 
+      0.9972581 
+> exp(confint(modelDB90))
+                         2.5 %          97.5 %
+(Intercept)     0.000002719904 8438403.9664178
+truRed24YES     0.471685129684       1.4563646
+age2>=80        1.116609035959       3.1850124
+BMI218.5-25     0.090972994410       0.8383609
+BMI2>25         0.078300078896       0.6634572
+ph2<=7.30       0.325045168254       0.9194990
+genderM         0.377247563359       1.0282211
+Renal           0.653571094791       2.0251851
+CHFYES          0.642350880641       1.7438215
+COPDYES         0.652906529435       1.7717753
+LiverYES        1.184020731988       4.6103847
+DiabetesYES     0.434489629863       1.2407346
+HR2>=100        0.637520606350       3.1513828
+MBP2<=65        0.657752081149       2.5796634
+RR2             0.915581449759       2.6133010
+pt              1.015659637547       1.0658269
+ptt             1.006464115394       1.0202967
+lac>=4          0.653738498214       1.7636539
+ventil          0.997623219878       3.2693031
+SAPSIII>=60     4.483468897843      14.3526185
+sepsis_shockYES 1.448433806699       4.2998048
+sofa2>=5        0.605215776329       1.5625759
+po2             0.985108204103       0.9982054
+pco2            0.993534283899       1.0303141
+glucose         0.998378993612       1.0085217
+potassium       1.030184701811       2.4335766
+T_min           0.651274027261       1.0151540
+T_max           0.708226372918       1.4492886
+los_icu         0.995682367071       0.9988364
+> exp(cbind(OR = coef(modelDB90), confint(modelDB90)))
+                       OR          2.5 %          97.5 %
+(Intercept)     4.7907883 0.000002719904 8438403.9664178
+truRed24YES     0.8288218 0.471685129684       1.4563646
+age2>=80        1.8858456 1.116609035959       3.1850124
+BMI218.5-25     0.2761670 0.090972994410       0.8383609
+BMI2>25         0.2279227 0.078300078896       0.6634572
+ph2<=7.30       0.5466980 0.325045168254       0.9194990
+genderM         0.6228113 0.377247563359       1.0282211
+Renal           1.1504792 0.653571094791       2.0251851
+CHFYES          1.0583692 0.642350880641       1.7438215
+COPDYES         1.0755481 0.652906529435       1.7717753
+LiverYES        2.3364056 1.184020731988       4.6103847
+DiabetesYES     0.7342250 0.434489629863       1.2407346
+HR2>=100        1.4174172 0.637520606350       3.1513828
+MBP2<=65        1.3026047 0.657752081149       2.5796634
+RR2             1.5468322 0.915581449759       2.6133010
+pt              1.0404409 1.015659637547       1.0658269
+ptt             1.0133568 1.006464115394       1.0202967
+lac>=4          1.0737637 0.653738498214       1.7636539
+ventil          1.8059714 0.997623219878       3.2693031
+SAPSIII>=60     8.0218152 4.483468897843      14.3526185
+sepsis_shockYES 2.4955926 1.448433806699       4.2998048
+sofa2>=5        0.9724688 0.605215776329       1.5625759
+po2             0.9916352 0.985108204103       0.9982054
+pco2            1.0117571 0.993534283899       1.0303141
+glucose         1.0034375 0.998378993612       1.0085217
+potassium       1.5833614 1.030184701811       2.4335766
+T_min           0.8131073 0.651274027261       1.0151540
+T_max           1.0131260 0.708226372918       1.4492886
+los_icu         0.9972581 0.995682367071       0.9988364
+
+ ###输血与预后分析
+> #10-11g输血与预后关系
+> # install.packages("MatchIt")
+> # install.packages("tableone")
+> ##多因素分析
+> datalow11 <- data[(data$low_hb>=10)&(data$low_hb<=11),]
+> modellow11 <- glm(death28~truRed24+age2+BMI2+
++                     ph2+gender+Renal+CHF+COPD+Liver+Diabetes+HR2+MBP2+RR2+pt+
++                     ptt+lac+ventil+SAPSIII+sepsis_shock+sofa2+po2+pco2+glucose+potassium+T_min+T_max+los_icu, data=datalow11, family='binomial')
+> summary(modellow11)
+
+Call:
+glm(formula = death28 ~ truRed24 + age2 + BMI2 + ph2 + gender + 
+    Renal + CHF + COPD + Liver + Diabetes + HR2 + MBP2 + RR2 + 
+    pt + ptt + lac + ventil + SAPSIII + sepsis_shock + sofa2 + 
+    po2 + pco2 + glucose + potassium + T_min + T_max + los_icu, 
+    family = "binomial", data = datalow11)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-2.2260  -0.5543  -0.3388  -0.2293   2.6981  
+
+Coefficients:
+                  Estimate Std. Error z value        Pr(>|z|)    
+(Intercept)      0.7487928  4.7254164   0.158        0.874094    
+truRed24YES     -0.0782738  0.4180447  -0.187        0.851474    
+age2>=80         0.4672428  0.1784329   2.619        0.008829 ** 
+BMI218.5-25     -0.2517978  0.4445890  -0.566        0.571149    
+BMI2>25         -0.4494383  0.4405264  -1.020        0.307619    
+ph2<=7.30       -0.1728780  0.2063036  -0.838        0.402043    
+genderM         -0.2393941  0.1761216  -1.359        0.174066    
+Renal            0.0763834  0.2009207   0.380        0.703821    
+CHFYES           0.2181078  0.1794768   1.215        0.224274    
+COPDYES         -0.0551727  0.1887289  -0.292        0.770028    
+LiverYES         0.2381679  0.2793228   0.853        0.393847    
+DiabetesYES     -0.3122055  0.1947463  -1.603        0.108904    
+HR2>=100         0.0258908  0.2273164   0.114        0.909319    
+MBP2<=65         0.0062432  0.3063414   0.020        0.983740    
+RR2              0.3353071  0.1874625   1.789        0.073669 .  
+pt               0.0187418  0.0071421   2.624        0.008687 ** 
+ptt              0.0069724  0.0024557   2.839        0.004521 ** 
+lac>=4           0.2484132  0.2235774   1.111        0.266532    
+ventil           0.7195761  0.2178776   3.303        0.000958 ***
+SAPSIII>=60      1.3106449  0.2001432   6.549 0.0000000000581 ***
+sepsis_shockYES  0.9221313  0.2350284   3.923 0.0000872755630 ***
+sofa2>=5        -0.2211359  0.1977276  -1.118        0.263402    
+po2             -0.0066898  0.0023120  -2.893        0.003810 ** 
+pco2            -0.0070702  0.0065953  -1.072        0.283717    
+glucose          0.0022935  0.0020969   1.094        0.274069    
+potassium        0.3582782  0.1417073   2.528        0.011462 *  
+T_min            0.0921216  0.1092782   0.843        0.399228    
+T_max           -0.2183248  0.1164021  -1.876        0.060709 .  
+los_icu         -0.0007873  0.0006864  -1.147        0.251355    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 1219.06  on 1356  degrees of freedom
+Residual deviance:  956.26  on 1328  degrees of freedom
+AIC: 1014.3
+
+Number of Fisher Scoring iterations: 5
+
+> exp(coef(modellow11))
+    (Intercept)     truRed24YES        age2>=80     BMI218.5-25         BMI2>25       ph2<=7.30         genderM 
+      2.1144458       0.9247112       1.5955888       0.7774019       0.6379864       0.8412403       0.7871046 
+          Renal          CHFYES         COPDYES        LiverYES     DiabetesYES        HR2>=100        MBP2<=65 
+      1.0793764       1.2437212       0.9463217       1.2689223       0.7318311       1.0262289       1.0062628 
+            RR2              pt             ptt          lac>=4          ventil     SAPSIII>=60 sepsis_shockYES 
+      1.3983698       1.0189185       1.0069967       1.2819896       2.0535624       3.7085647       2.5146441 
+       sofa2>=5             po2            pco2         glucose       potassium           T_min           T_max 
+      0.8016078       0.9933326       0.9929548       1.0022961       1.4308636       1.0964981       0.8038643 
+        los_icu 
+      0.9992130 
+> exp(confint(modellow11))
+Waiting for profiling to be done...
+                       2.5 %        97.5 %
+(Intercept)     0.0002033178 23444.0753041
+truRed24YES     0.3889530706     2.0248096
+age2>=80        1.1241692971     2.2643132
+BMI218.5-25     0.3318330530     1.9209151
+BMI2>25         0.2748170721     1.5658911
+ph2<=7.30       0.5595131476     1.2573690
+genderM         0.5572131830     1.1122164
+Renal           0.7244783045     1.5940311
+CHFYES          0.8732871545     1.7661647
+COPDYES         0.6512639438     1.3659645
+LiverYES        0.7263720965     2.1755197
+DiabetesYES     0.4970808852     1.0676148
+HR2>=100        0.6525509071     1.5926377
+MBP2<=65        0.5445813989     1.8143187
+RR2             0.9678101213     2.0196070
+pt              1.0046449066     1.0333084
+ptt             1.0020965861     1.0118084
+lac>=4          0.8223677148     1.9777913
+ventil          1.3468902497     3.1683890
+SAPSIII>=60     2.5141636370     5.5158653
+sepsis_shockYES 1.5861028451     3.9899790
+sofa2>=5        0.5405634513     1.1746574
+po2             0.9886611417     0.9976712
+pco2            0.9798841688     1.0056118
+glucose         0.9981511299     1.0064048
+potassium       1.0849485730     1.8920124
+T_min           0.8884328512     1.3632035
+T_max           0.6376811495     1.0070323
+los_icu         0.9978320167     1.0005282
+> exp(cbind(OR = coef(modellow11), confint(modellow11)))
+Waiting for profiling to be done...
+                       OR        2.5 %        97.5 %
+(Intercept)     2.1144458 0.0002033178 23444.0753041
+truRed24YES     0.9247112 0.3889530706     2.0248096
+age2>=80        1.5955888 1.1241692971     2.2643132
+BMI218.5-25     0.7774019 0.3318330530     1.9209151
+BMI2>25         0.6379864 0.2748170721     1.5658911
+ph2<=7.30       0.8412403 0.5595131476     1.2573690
+genderM         0.7871046 0.5572131830     1.1122164
+Renal           1.0793764 0.7244783045     1.5940311
+CHFYES          1.2437212 0.8732871545     1.7661647
+COPDYES         0.9463217 0.6512639438     1.3659645
+LiverYES        1.2689223 0.7263720965     2.1755197
+DiabetesYES     0.7318311 0.4970808852     1.0676148
+HR2>=100        1.0262289 0.6525509071     1.5926377
+MBP2<=65        1.0062628 0.5445813989     1.8143187
+RR2             1.3983698 0.9678101213     2.0196070
+pt              1.0189185 1.0046449066     1.0333084
+ptt             1.0069967 1.0020965861     1.0118084
+lac>=4          1.2819896 0.8223677148     1.9777913
+ventil          2.0535624 1.3468902497     3.1683890
+SAPSIII>=60     3.7085647 2.5141636370     5.5158653
+sepsis_shockYES 2.5146441 1.5861028451     3.9899790
+sofa2>=5        0.8016078 0.5405634513     1.1746574
+po2             0.9933326 0.9886611417     0.9976712
+pco2            0.9929548 0.9798841688     1.0056118
+glucose         1.0022961 0.9981511299     1.0064048
+potassium       1.4308636 1.0849485730     1.8920124
+T_min           1.0964981 0.8884328512     1.3632035
+T_max           0.8038643 0.6376811495     1.0070323
+los_icu         0.9992130 0.9978320167     1.0005282
+
+
+> # 倾向性匹配分析
+> # install.packages("Matching")
+> library(MatchIt)
+> library(tableone)
+> mlow11 <-matchit(data=datalow11,
++                  formula=truRed24~age2+BMI2+
++                    ph2+gender+Renal+CHF+COPD+Liver+Diabetes+HR2+MBP2+RR2+pt+
++                    ptt+lac+ventil+SAPSIII+sepsis_shock+sofa2+po2+pco2+glucose+potassium+T_min+T_max+los_icu,
++                  method="nearest",distance = "logit",replace=FALSE,caliper=0.1,ratio = 1)
+> summary(mlow11)
+
+Call:
+matchit(formula = truRed24 ~ age2 + BMI2 + ph2 + gender + Renal + 
+    CHF + COPD + Liver + Diabetes + HR2 + MBP2 + RR2 + pt + ptt + 
+    lac + ventil + SAPSIII + sepsis_shock + sofa2 + po2 + pco2 + 
+    glucose + potassium + T_min + T_max + los_icu, data = datalow11, 
+    method = "nearest", distance = "logit", replace = FALSE, 
+    caliper = 0.1, ratio = 1)
+
+Summary of Balance for All Data:
+                Means Treated Means Control Std. Mean Diff. Var. Ratio eCDF Mean eCDF Max
+distance               0.1292        0.0396          0.7744     3.9169    0.3169   0.4946
+age2<80                0.7458        0.6448          0.2318          .    0.1009   0.1009
+age2>=80               0.2542        0.3552         -0.2318          .    0.1009   0.1009
+BMI2<18.5              0.0508        0.0262          0.1122          .    0.0247   0.0247
+BMI218.5-25            0.2712        0.2704          0.0017          .    0.0008   0.0008
+BMI2>25                0.6780        0.7034         -0.0544          .    0.0254   0.0254
+ph2>7.30               0.4068        0.5917         -0.3764          .    0.1849   0.1849
+ph2<=7.30              0.5932        0.4083          0.3764          .    0.1849   0.1849
+genderF                0.4576        0.3960          0.1237          .    0.0616   0.0616
+genderM                0.5424        0.6040         -0.1237          .    0.0616   0.0616
+Renal                  0.1864        0.2134         -0.0692          .    0.0270   0.0270
+CHFNO                  0.6949        0.6502          0.0970          .    0.0447   0.0447
+CHFYES                 0.3051        0.3498         -0.0970          .    0.0447   0.0447
+COPDNO                 0.6102        0.6988         -0.1817          .    0.0886   0.0886
+COPDYES                0.3898        0.3012          0.1817          .    0.0886   0.0886
+LiverNO                0.8814        0.9230         -0.1287          .    0.0416   0.0416
+LiverYES               0.1186        0.0770          0.1287          .    0.0416   0.0416
+DiabetesNO             0.6610        0.6618         -0.0016          .    0.0008   0.0008
+DiabetesYES            0.3390        0.3382          0.0016          .    0.0008   0.0008
+HR2<100                0.7966        0.8606         -0.1589          .    0.0639   0.0639
+HR2>=100               0.2034        0.1394          0.1589          .    0.0639   0.0639
+MBP2>65                0.9831        0.9260          0.4417          .    0.0570   0.0570
+MBP2<=65               0.0169        0.0740         -0.4417          .    0.0570   0.0570
+RR2                    0.1695        0.3983         -0.6099          .    0.2288   0.2288
+pt                    16.9593       17.5598         -0.1230     0.2430    0.0476   0.1903
+ptt                   46.0458       44.2740          0.0585     1.0378    0.0493   0.1695
+lac<4                  0.6949        0.8482         -0.3330          .    0.1533   0.1533
+lac>=4                 0.3051        0.1518          0.3330          .    0.1533   0.1533
+ventil                 0.8644        0.6263          0.6954          .    0.2381   0.2381
+SAPSIII<60             0.5085        0.6025         -0.1880          .    0.0940   0.0940
+SAPSIII>=60            0.4915        0.3975          0.1880          .    0.0940   0.0940
+sepsis_shockNO         0.7966        0.8644         -0.1684          .    0.0678   0.0678
+sepsis_shockYES        0.2034        0.1356          0.1684          .    0.0678   0.0678
+sofa2<5                0.7288        0.7766         -0.1074          .    0.0478   0.0478
+sofa2>=5               0.2712        0.2234          0.1074          .    0.0478   0.0478
+po2                   99.5763       95.6602          0.0924     0.8432    0.0275   0.1163
+pco2                  50.9492       48.1294          0.2492     0.6297    0.0415   0.1602
+glucose              124.4068      121.5586          0.0742     0.9924    0.0233   0.0709
+potassium              3.9339        3.9064          0.0539     0.7787    0.0231   0.0932
+T_min                 35.6303       36.1630         -0.5083     1.7344    0.1144   0.3151
+T_max                 37.5173       37.5099          0.0112     0.7657    0.0263   0.1055
+los_icu              198.2203      115.1680          0.4498     2.3825    0.1630   0.2881
+
+
+Summary of Balance for Matched Data:
+                Means Treated Means Control Std. Mean Diff. Var. Ratio eCDF Mean eCDF Max Std. Pair Dist.
+distance               0.1066        0.1067         -0.0006     0.9975    0.0008   0.0370          0.0060
+age2<80                0.7778        0.7037          0.1701          .    0.0741   0.0741          1.1058
+age2>=80               0.2222        0.2963         -0.1701          .    0.0741   0.0741          1.1058
+BMI2<18.5              0.0370        0.0556         -0.0843          .    0.0185   0.0185          0.4215
+BMI218.5-25            0.2593        0.3148         -0.1250          .    0.0556   0.0556          0.8747
+BMI2>25                0.7037        0.6296          0.1585          .    0.0741   0.0741          0.9512
+ph2>7.30               0.4259        0.4630         -0.0754          .    0.0370   0.0370          1.1309
+ph2<=7.30              0.5741        0.5370          0.0754          .    0.0370   0.0370          1.1309
+genderF                0.4630        0.4630          0.0000          .    0.0000   0.0000          0.3333
+genderM                0.5370        0.5370          0.0000          .    0.0000   0.0000          0.3333
+Renal                  0.1852        0.1481          0.0951          .    0.0370   0.0370          0.6657
+CHFNO                  0.7037        0.7407         -0.0804          .    0.0370   0.0370          0.8848
+CHFYES                 0.2963        0.2593          0.0804          .    0.0370   0.0370          0.8848
+COPDNO                 0.6111        0.7407         -0.2658          .    0.1296   0.1296          0.7214
+COPDYES                0.3889        0.2593          0.2658          .    0.1296   0.1296          0.7214
+LiverNO                0.8704        0.9074         -0.1145          .    0.0370   0.0370          0.4581
+LiverYES               0.1296        0.0926          0.1145          .    0.0370   0.0370          0.4581
+DiabetesNO             0.6481        0.7037         -0.1174          .    0.0556   0.0556          0.8215
+DiabetesYES            0.3519        0.2963          0.1174          .    0.0556   0.0556          0.8215
+HR2<100                0.7963        0.8333         -0.0920          .    0.0370   0.0370          0.7361
+HR2>=100               0.2037        0.1667          0.0920          .    0.0370   0.0370          0.7361
+MBP2>65                0.9815        1.0000         -0.1435          .    0.0185   0.0185          0.1435
+MBP2<=65               0.0185        0.0000          0.1435          .    0.0185   0.0185          0.1435
+RR2                    0.1852        0.1296          0.1481          .    0.0556   0.0556          0.6417
+pt                    17.0056       17.3241         -0.0652     0.1602    0.0590   0.2963          1.2486
+ptt                   46.3222       39.7648          0.2164     1.6162    0.0779   0.2037          0.7535
+lac<4                  0.7407        0.7593         -0.0402          .    0.0185   0.0185          0.6033
+lac>=4                 0.2593        0.2407          0.0402          .    0.0185   0.0185          0.6033
+ventil                 0.8519        0.9074         -0.1623          .    0.0556   0.0556          0.4868
+SAPSIII<60             0.5370        0.3889          0.2963          .    0.1481   0.1481          0.9631
+SAPSIII>=60            0.4630        0.6111         -0.2963          .    0.1481   0.1481          0.9631
+sepsis_shockNO         0.8148        0.8704         -0.1380          .    0.0556   0.0556          0.4141
+sepsis_shockYES        0.1852        0.1296          0.1380          .    0.0556   0.0556          0.4141
+sofa2<5                0.7407        0.6667          0.1666          .    0.0741   0.0741          0.9997
+sofa2>=5               0.2593        0.3333         -0.1666          .    0.0741   0.0741          0.9997
+po2                  101.1667       93.5926          0.1788     1.2532    0.0357   0.2222          0.9719
+pco2                  50.1852       46.8704          0.2930     0.8893    0.0379   0.1852          0.9609
+glucose              126.4630      124.5185          0.0507     1.2618    0.0370   0.1296          0.9880
+potassium              3.9481        3.8370          0.2177     1.0451    0.0400   0.1852          1.2190
+T_min                 35.6381       35.7607         -0.1170     1.0254    0.0304   0.1481          1.0784
+T_max                 37.5046       37.5204         -0.0238     0.9743    0.0281   0.1481          1.1216
+los_icu              169.6667      192.1667         -0.1219     0.5545    0.0392   0.1481          0.7102
+
+Percent Balance Improvement:
+                Std. Mean Diff. Var. Ratio eCDF Mean eCDF Max
+distance                   99.9       99.8      99.7     92.5
+age2<80                    26.6          .      26.6     26.6
+age2>=80                   26.6          .      26.6     26.6
+BMI2<18.5                  24.9          .      24.9     24.9
+BMI218.5-25             -7111.1          .   -7111.1  -7111.1
+BMI2>25                  -191.4          .    -191.4   -191.4
+ph2>7.30                   80.0          .      80.0     80.0
+ph2<=7.30                  80.0          .      80.0     80.0
+genderF                   100.0          .     100.0    100.0
+genderM                   100.0          .     100.0    100.0
+Renal                     -37.4          .     -37.4    -37.4
+CHFNO                      17.1          .      17.1     17.1
+CHFYES                     17.1          .      17.1     17.1
+COPDNO                    -46.3          .     -46.3    -46.3
+COPDYES                   -46.3          .     -46.3    -46.3
+LiverNO                    11.0          .      11.0     11.0
+LiverYES                   11.0          .      11.0     11.0
+DiabetesNO              -7111.1          .   -7111.1  -7111.1
+DiabetesYES             -7111.1          .   -7111.1  -7111.1
+HR2<100                    42.1          .      42.1     42.1
+HR2>=100                   42.1          .      42.1     42.1
+MBP2>65                    67.5          .      67.5     67.5
+MBP2<=65                   67.5          .      67.5     67.5
+RR2                        75.7          .      75.7     75.7
+pt                         47.0      -29.5     -23.9    -55.7
+ptt                      -270.1    -1194.5     -58.2    -20.2
+lac<4                      87.9          .      87.9     87.9
+lac>=4                     87.9          .      87.9     87.9
+ventil                     76.7          .      76.7     76.7
+SAPSIII<60                -57.6          .     -57.6    -57.6
+SAPSIII>=60               -57.6          .     -57.6    -57.6
+sepsis_shockNO             18.1          .      18.1     18.1
+sepsis_shockYES            18.1          .      18.1     18.1
+sofa2<5                   -55.1          .     -55.1    -55.1
+sofa2>=5                  -55.1          .     -55.1    -55.1
+po2                       -93.4      -32.3     -29.9    -91.0
+pco2                      -17.6       74.6       8.7    -15.6
+glucose                    31.7    -2940.9     -58.9    -82.9
+potassium                -304.0       82.4     -73.4    -98.7
+T_min                      77.0       95.4      73.5     53.0
+T_max                    -112.2       90.2      -7.0    -40.4
+los_icu                    72.9       32.1      75.9     48.6
+
+Sample Sizes:
+          Control Treated
+All          1298      59
+Matched        54      54
+Unmatched    1244       5
+Discarded       0       0
+
+> #提取匹配后病例对照
+> set.seed(1111)
+> mlowdata11 <- match.data(mlow11,group = "all",
++                          distance = "distance",
++                          weights = "weights",
++                          subclass= "subclass",
++                          data = NULL,
++                          include.s.weights = TRUE,
++                          drop.unmatched = TRUE)
+> modelmlow11 <- glm(death28~truRed24, data=mlowdata11, family='binomial')
+> summary(modelmlow11)
+
+Call:
+glm(formula = death28 ~ truRed24, family = "binomial", data = mlowdata11)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-0.5663  -0.5663  -0.5270  -0.5270   2.0214  
+
+Coefficients:
+            Estimate Std. Error z value  Pr(>|z|)    
+(Intercept)  -1.9042     0.4051  -4.700 0.0000026 ***
+truRed24YES   0.1550     0.5576   0.278     0.781    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 87.035  on 107  degrees of freedom
+Residual deviance: 86.958  on 106  degrees of freedom
+AIC: 90.958
+
+Number of Fisher Scoring iterations: 4
+
+> exp(coef(modelmlow11))
+(Intercept) truRed24YES 
+  0.1489362   1.1677019 
+> exp(confint(modelmlow11))
+Waiting for profiling to be done...
+                 2.5 %    97.5 %
+(Intercept) 0.06143769 0.3082368
+truRed24YES 0.38853546 3.5821205
+> exp(cbind(OR = coef(modelmlow11), confint(modelmlow11)))
+Waiting for profiling to be done...
+                   OR      2.5 %    97.5 %
+(Intercept) 0.1489362 0.06143769 0.3082368
+truRed24YES 1.1677019 0.38853546 3.5821205
+
+#逆概率加权
+> datalow11$wt1 = 1/datalow11$ps  #输血组权重
+> datalow11$wt2 = 1/(1-datalow11$ps) #未输血组权重
+> #输血组权重为wt1未输血组权重为wt2
+> datalow11$w <- ifelse(datalow11$truRed24=="YES",datalow11$wt1,datalow11$wt2)
+> #ITPW后的数据做table
+> # install.packages("survey")
+> library(survey)
+> library(tableone)
+> dataIPTW11=svydesign(ids=~0,data=datalow11,weights=~w) #提取ITPW后数据
+> #2再次构建Table-1模型
+> vars=c("age2" ,"BMI2" ,"ph2" ,"gender", "Renal" ,"CHF", "COPD" ,"Liver" ,"Diabetes", 
++        "HR", "MBP2","RR2","pt","ptt","lac"," ventil", "SAPSIII",
++        "sepsis_shock","sofa2","po2","pco2", "glucose","potassium","T_min","T_max","los_icu")
+> 
+> tab_IPTW11=svyCreateTableOne(vars=vars,strata="truRed24",data=dataIPTW11,test=T)
+Warning message:
+In ModuleReturnVarsExist(vars, data$variables) :
+  The data frame does not have:  ventil  Dropped
+> print(tab_IPTW11,showAllLevels=TRUE,smd=TRUE)
+                       Stratified by truRed24
+                        level   NO               YES              p      test SMD   
+  n                              1363.2           1178.3                            
+  age2 (%)              <80       888.3 (65.2)     763.8 (64.8)    0.979       0.007
+                        >=80      475.0 (34.8)     414.5 (35.2)                     
+  BMI2 (%)              <18.5      41.1 ( 3.0)      58.7 ( 5.0)    0.531       0.230
+                        18.5-25   365.9 (26.8)     420.0 (35.6)                     
+                        >25       956.3 (70.1)     699.7 (59.4)                     
+  ph2 (%)               >7.30     794.8 (58.3)     699.5 (59.4)    0.917       0.022
+                        <=7.30    568.5 (41.7)     478.8 (40.6)                     
+  gender (%)            F         540.4 (39.6)     329.5 (28.0)    0.194       0.249
+                        M         822.9 (60.4)     848.8 (72.0)                     
+  Renal (mean (SD))                0.21 (0.41)      0.18 (0.39)    0.649       0.080
+  CHF (%)               NO        892.2 (65.5)     892.1 (75.7)    0.246       0.227
+                        YES       471.0 (34.5)     286.2 (24.3)                     
+  COPD (%)              NO        942.3 (69.1)     879.1 (74.6)    0.504       0.122
+                        YES       421.0 (30.9)     299.2 (25.4)                     
+  Liver (%)             NO       1252.4 (91.9)    1086.9 (92.2)    0.931       0.014
+                        YES       110.8 ( 8.1)      91.4 ( 7.8)                     
+  Diabetes (%)          NO        903.4 (66.3)     849.0 (72.1)    0.510       0.125
+                        YES       459.8 (33.7)     329.3 (27.9)                     
+  HR (mean (SD))                  84.63 (14.61)    83.71 (11.71)   0.626       0.070
+  MBP2 (%)              >65      1266.3 (92.9)    1154.9 (98.0)    0.168       0.248
+                        <=65       97.0 ( 7.1)      23.4 ( 2.0)                     
+  RR2 (mean (SD))                  0.39 (0.49)      0.33 (0.47)    0.652       0.125
+  pt (mean (SD))                  17.53 (9.83)     16.94 (5.35)    0.531       0.075
+  ptt (mean (SD))                 44.32 (29.68)    40.53 (19.02)   0.123       0.152
+  lac (%)               <4       1145.5 (84.0)    1004.2 (85.2)    0.832       0.033
+                        >=4       217.7 (16.0)     174.0 (14.8)                     
+  SAPSIII (%)           <60       815.4 (59.8)     690.9 (58.6)    0.923       0.024
+                        >=60      547.8 (40.2)     487.4 (41.4)                     
+  sepsis_shock (%)      NO       1172.4 (86.0)    1088.3 (92.4)    0.125       0.206
+                        YES       190.9 (14.0)      90.0 ( 7.6)                     
+  sofa2 (%)             <5       1057.7 (77.6)     902.2 (76.6)    0.895       0.024
+                        >=5       305.6 (22.4)     276.1 (23.4)                     
+  po2 (mean (SD))                 95.93 (46.08)    98.32 (45.63)   0.811       0.052
+  pco2 (mean (SD))                48.24 (14.31)    47.86 (8.63)    0.776       0.033
+  glucose (mean (SD))            121.70 (38.36)   116.21 (34.17)   0.364       0.151
+  potassium (mean (SD))            3.91 (0.58)      3.87 (0.56)    0.747       0.072
+  T_min (mean (SD))               36.11 (0.97)     35.96 (0.78)    0.236       0.175
+  T_max (mean (SD))               37.51 (0.75)     37.60 (0.54)    0.317       0.139
+  los_icu (mean (SD))            119.28 (125.45)  138.40 (114.33)  0.336       0.159
+> addmargins(table(ExtractSmd(tab_IPTW11)>0.1))
+
+FALSE  TRUE   Sum 
+   12    13    25 
+   
+   #拟合逆概率加权后输血和28天死亡风险
+> modelIPTW11 <-glm(death28~truRed24,family = quasibinomial(link = "logit"),data = datalow11,weight=w)
+> summary(modelIPTW11)
+
+Call:
+glm(formula = death28 ~ truRed24, family = quasibinomial(link = "logit"), 
+    data = datalow11, weights = w)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-5.5920  -0.6120  -0.6041  -0.6002  23.3689  
+
+Coefficients:
+            Estimate Std. Error t value             Pr(>|t|)    
+(Intercept)  -1.6279     0.1001 -16.255 < 0.0000000000000002 ***
+truRed24YES   0.6110     0.1349   4.531            0.0000064 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for quasibinomial family taken to be 1.875667)
+
+    Null deviance: 2620.4  on 1356  degrees of freedom
+Residual deviance: 2581.3  on 1355  degrees of freedom
+AIC: NA
+
+Number of Fisher Scoring iterations: 8
+
+> exp(coef(modelIPTW11))
+(Intercept) truRed24YES 
+  0.1963372   1.8423350 
+> exp(confint(modelIPTW11))
+Waiting for profiling to be done...
+                2.5 %    97.5 %
+(Intercept) 0.1606199 0.2379307
+truRed24YES 1.4159189 2.4033352
+> exp(cbind(OR = coef(modelIPTW11), confint(modelIPTW11)))
+Waiting for profiling to be done...
+                   OR     2.5 %    97.5 %
+(Intercept) 0.1963372 0.1606199 0.2379307
+truRed24YES 1.8423350 1.4159189 2.4033352
+> #双重稳健模型与28天死亡风险
+> #拟合逆概率加权后输血和28天死亡风险
+> ipw_svydesign11 <- svydesign(ids = ~ subject_id, weights = ~ w, data = datalow11)
+> modelDB11 <-svyglm(death28~truRed24+age2+BMI2+
++                      ph2+gender+Renal+CHF+COPD+Liver+Diabetes+HR2+MBP2+RR2+pt+
++                      ptt+lac+ventil+SAPSIII+sepsis_shock+sofa2+po2+pco2+glucose+potassium+T_min+T_max+los_icu,family = quasibinomial,design=ipw_svydesign11)
+> summary(modelDB11)
+
+Call:
+svyglm(formula = death28 ~ truRed24 + age2 + BMI2 + ph2 + gender + 
+    Renal + CHF + COPD + Liver + Diabetes + HR2 + MBP2 + RR2 + 
+    pt + ptt + lac + ventil + SAPSIII + sepsis_shock + sofa2 + 
+    po2 + pco2 + glucose + potassium + T_min + T_max + los_icu, 
+    design = ipw_svydesign11, family = quasibinomial)
+
+Survey design:
+svydesign(ids = ~subject_id, weights = ~w, data = datalow11)
+
+Coefficients:
+                  Estimate Std. Error t value        Pr(>|t|)    
+(Intercept)      0.0256336  6.3932440   0.004         0.99680    
+truRed24YES      0.8086358  0.3885895   2.081         0.03763 *  
+age2>=80         0.7786571  0.2715916   2.867         0.00421 ** 
+BMI218.5-25      1.5530309  0.7977083   1.947         0.05176 .  
+BMI2>25          0.7737812  0.7907225   0.979         0.32797    
+ph2<=7.30       -0.7901706  0.3020881  -2.616         0.00901 ** 
+genderM          0.0160856  0.2650117   0.061         0.95161    
+Renal           -0.3523139  0.2730537  -1.290         0.19718    
+CHFYES           0.0524780  0.2866932   0.183         0.85479    
+COPDYES         -0.1770925  0.3003125  -0.590         0.55550    
+LiverYES         0.0601541  0.3765789   0.160         0.87311    
+DiabetesYES     -0.5211944  0.3095076  -1.684         0.09243 .  
+HR2>=100        -0.7872654  0.3718829  -2.117         0.03445 *  
+MBP2<=65         0.3053879  0.4307497   0.709         0.47847    
+RR2              1.1404535  0.2899123   3.934 0.0000879401733 ***
+pt               0.0221167  0.0098475   2.246         0.02487 *  
+ptt              0.0059591  0.0038788   1.536         0.12470    
+lac>=4           0.6709085  0.3065753   2.188         0.02881 *  
+ventil           0.2907203  0.3132217   0.928         0.35349    
+SAPSIII>=60      2.4054091  0.3575934   6.727 0.0000000000257 ***
+sepsis_shockYES  1.0130686  0.3443047   2.942         0.00331 ** 
+sofa2>=5        -0.9051395  0.3092632  -2.927         0.00348 ** 
+po2             -0.0067497  0.0028324  -2.383         0.01731 *  
+pco2            -0.0097141  0.0087546  -1.110         0.26737    
+glucose          0.0014295  0.0029822   0.479         0.63178    
+potassium        0.3279928  0.2085476   1.573         0.11602    
+T_min           -0.1447909  0.1188297  -1.218         0.22326    
+T_max           -0.0077496  0.1736927  -0.045         0.96442    
+los_icu         -0.0016486  0.0009496  -1.736         0.08276 .  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for quasibinomial family taken to be 1.395804)
+
+Number of Fisher Scoring iterations: 7
+
+> exp(coef(modelDB11))
+    (Intercept)     truRed24YES        age2>=80     BMI218.5-25         BMI2>25       ph2<=7.30         genderM 
+      1.0259650       2.2448434       2.1785447       4.7257720       2.1679482       0.4537674       1.0162157 
+          Renal          CHFYES         COPDYES        LiverYES     DiabetesYES        HR2>=100        MBP2<=65 
+      0.7030594       1.0538794       0.8377023       1.0620002       0.5938109       0.4550876       1.3571513 
+            RR2              pt             ptt          lac>=4          ventil     SAPSIII>=60 sepsis_shockYES 
+      3.1281866       1.0223631       1.0059769       1.9560135       1.3373905      11.0829629       2.7540391 
+       sofa2>=5             po2            pco2         glucose       potassium           T_min           T_max 
+      0.4044855       0.9932731       0.9903329       1.0014305       1.3881790       0.8652032       0.9922803 
+        los_icu 
+      0.9983528 
+> exp(confint(modelDB11))
+                         2.5 %         97.5 %
+(Intercept)     0.000003666309 287101.8499057
+truRed24YES     1.047409085157      4.8112261
+age2>=80        1.278722755095      3.7115607
+BMI218.5-25     0.988195336813     22.5997028
+BMI2>25         0.459590164712     10.2265009
+ph2<=7.30       0.250876982039      0.8207402
+genderM         0.604229326868      1.7091100
+Renal           0.411487129974      1.2012345
+CHFYES          0.600529843079      1.8494697
+COPDYES         0.464761362711      1.5099042
+LiverYES        0.507326660240      2.2231130
+DiabetesYES     0.323559707595      1.0897876
+HR2>=100        0.219411270600      0.9439109
+MBP2<=65        0.582960312354      3.1594940
+RR2             1.771306622283      5.5244820
+pt              1.002802215507      1.0423055
+ptt             0.998351153504      1.0136608
+lac>=4          1.071954657495      3.5691705
+ventil          0.723436217672      2.4723856
+SAPSIII>=60     5.495334335006     22.3520642
+sepsis_shockYES 1.401619156773      5.4114069
+sofa2>=5        0.220504486560      0.7419735
+po2             0.987769180939      0.9988076
+pco2            0.973469873652      1.0074881
+glucose         0.995588903009      1.0073063
+potassium       0.922077645928      2.0898901
+T_min           0.685295412640      1.0923414
+T_max           0.705751814303      1.3951367
+los_icu         0.996494781181      1.0002142
+> exp(cbind(OR = coef(modelDB11), confint(modelDB11)))
+                        OR          2.5 %         97.5 %
+(Intercept)      1.0259650 0.000003666309 287101.8499057
+truRed24YES      2.2448434 1.047409085157      4.8112261
+age2>=80         2.1785447 1.278722755095      3.7115607
+BMI218.5-25      4.7257720 0.988195336813     22.5997028
+BMI2>25          2.1679482 0.459590164712     10.2265009
+ph2<=7.30        0.4537674 0.250876982039      0.8207402
+genderM          1.0162157 0.604229326868      1.7091100
+Renal            0.7030594 0.411487129974      1.2012345
+CHFYES           1.0538794 0.600529843079      1.8494697
+COPDYES          0.8377023 0.464761362711      1.5099042
+LiverYES         1.0620002 0.507326660240      2.2231130
+DiabetesYES      0.5938109 0.323559707595      1.0897876
+HR2>=100         0.4550876 0.219411270600      0.9439109
+MBP2<=65         1.3571513 0.582960312354      3.1594940
+RR2              3.1281866 1.771306622283      5.5244820
+pt               1.0223631 1.002802215507      1.0423055
+ptt              1.0059769 0.998351153504      1.0136608
+lac>=4           1.9560135 1.071954657495      3.5691705
+ventil           1.3373905 0.723436217672      2.4723856
+SAPSIII>=60     11.0829629 5.495334335006     22.3520642
+sepsis_shockYES  2.7540391 1.401619156773      5.4114069
+sofa2>=5         0.4044855 0.220504486560      0.7419735
+po2              0.9932731 0.987769180939      0.9988076
+pco2             0.9903329 0.973469873652      1.0074881
+glucose          1.0014305 0.995588903009      1.0073063
+potassium        1.3881790 0.922077645928      2.0898901
+T_min            0.8652032 0.685295412640      1.0923414
+T_max            0.9922803 0.705751814303      1.3951367
+los_icu          0.9983528 0.996494781181      1.0002142
