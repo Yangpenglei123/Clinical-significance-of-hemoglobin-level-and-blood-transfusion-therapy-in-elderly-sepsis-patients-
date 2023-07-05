@@ -8,22 +8,12 @@ ICU_patients.duplicated(subset=['subject_id']).sum()
 #导入脓毒症
 sepsis3 = pd.read_csv('D:\hongxiboandsepsis\sepsis3.csv')
 sepsis3.columns
-### 24小时内留取培养 3天内使用抗生素
+
 sepsis3['suspected_infection_time'] = pd.to_datetime(sepsis3['suspected_infection_time'])
 sepsis3['antibiotic_time']= pd.to_datetime(sepsis3['antibiotic_time'])
 sepsis3['culture_time'] = pd.to_datetime(sepsis3['culture_time'])
-sepsis3['delt1'] = (sepsis3.antibiotic_time -
-                    sepsis3.suspected_infection_time   ).astype('timedelta64[h]')
-
-sepsis3['delt2'] = (sepsis3.culture_time -
-                     sepsis3.suspected_infection_time ).astype('timedelta64[h]')
-
-sepsis3=sepsis3[(sepsis3.delt1 <=72) |(sepsis3.delt2 <=24)]
-
 sepsis3 = sepsis3.drop(labels=['culture_time','antibiotic_time', 'respiration','coagulation', 'liver', 'cardiovascular', 'cns', 
-'renal','sepsis3','delt1','delt2'],axis=1)
-
-
+'renal','sepsis3'],axis=1)
 sepsis3.columns
 # 剔除重复数据
 sepsis3.duplicated(subset = ['subject_id']).sum()
