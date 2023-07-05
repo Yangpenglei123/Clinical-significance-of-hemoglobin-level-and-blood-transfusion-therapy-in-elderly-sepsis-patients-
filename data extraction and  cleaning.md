@@ -55,7 +55,7 @@ sepsis_ICU.columns
 sepsis_ICU.isna().sum()
 sepsis_ICU.dropna(axis = 0,subset=['lactate_max'])
 sepsis_ICU=sepsis_ICU.dropna(axis = 0,subset=['lactate_max'])
-####删除年龄小于65及住ICU>48小时
+####删除年龄小于65及住ICU>24小时
 sepsis_ICU.columns
 sepsis_ICU = sepsis_ICU.drop(labels=['ethnicity', 'hospstay_seq',
  'first_hosp_stay','icustay_seq','first_icu_stay'],axis=1)
