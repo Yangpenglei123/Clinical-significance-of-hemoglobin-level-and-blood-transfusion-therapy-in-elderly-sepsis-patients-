@@ -1,40 +1,106 @@
-Table 1
-import delimited D:\hongxiboandsepsis\shuju.csv
-*连续性变量单因素检验
-tabstat admission_age sofa_score platelets wbc bun creatinine glucose sodium ///
- potassium pt ptt lactate ph po2 pco2 mean_hb hr sbp dbp mbp rr t_max spo2 ///
- apsiii bmi high_hb low_hb, statistics( p25 p50 p75 mean sd ) by(death28)
- ttest admission_age, by(death28)
-ttest bmi , by(death28)
-ttest apsiii , by(death28)
-ttest sofa_score , by(death28)
-ttest mean_hb , by(death28)
-ttest wbc , by(death28)
-ttest creatinine , by(death28)
-ttest bun , by(death28)
-ttest pt , by(death28)
-ttest ptt , by(death28)
-ttest ph , by(death28)
-ttest lactate , by(death28)
-ttest rr , by(death28)
-ttest hr , by(death28)
-ttest mbp , by(death28)
-ttest hb , by(death28)
-ttest po2 , by(death28)
-ttest pco2 , by(death28)
-ttest t_max , by(death28)
+> library(ggplot2)
+> data <- read.csv("D:/sepsistransfusion/shuju.csv")
+> data$sizu <- 0
+> data$sizu[data$high_hb>= 10& data$high_hb <=13] <- 1
+> data$sizu[data$high_hb> 13& data$high_hb <=15] <- 2
+> data$sizu[data$high_hb> 15] <- 3
+> data$sizu <- factor(data$sizu,levels = c(0,1,2,3),labels = c("<10","10-13","13-15",">15"))
+> table(data$sizu)
+
+  <10 10-13 13-15   >15 
+ 1747  4410  1055   261 
 
 
-ttest low_hb , by(death28)
- ttest charlson_comorbidity_index, by(death28)
-tabstat charlson_comorbidity_index apsiii, statistics( p25 p50 p75 mean sd ) by(death28)
-*分类变量卡方检验
-tabulate gender death28, chi2 column
-tabulate chf death28, chi2 column
-tabulate copd death28, chi2 column
-tabulate liver death28, chi2 column
-tabulate renal death28, chi2 column
-tabulate diabetes death28, chi2 column
-tabulate vaso death28, chi2 column
-tabulate ventil death28, chi2 column
-tabulate trured24 death28, chi2 column
+> dataN <- select(data,admission_age, gender ,BMI , CHF ,Liver , COPD ,Renal , 
++                 Diabetes ,charlson_comorbidity_index ,apsiii ,sofa_score , wbc , 
++                 creatinine , bun ,pt ,ptt ,ph ,lactate , RR ,HR ,MBP , po2 ,pco2 , T_max ,
++                 vaso , sepsis_shock , ventil , sizu )
+> 
+> library(epiDisplay)
+
+> table1 <- tableStack(vars=1:28, by=sizu,dataFrame= dataN, means = TRUE, iqr = NULL, sds = TRUE,
++                      prevalence = TRUE, test = TRUE,decimal=2)
+> table1
+                           <10                10-13              13-15             >15              Test stat.                         P value
+Total                      1747               4410               1055              261                                                        
+                                                                                                                                              
+admission_age                                                                                       ANOVA F-test (3, 7469 df) = 5.837  < 0.001
+  mean(SD)                 77.57 (7.75)       76.95 (7.69)       76.86 (7.85)      75.67 (7.74)                                               
+                                                                                                                                              
+gender                                                                                              Chisq. (3 df) = 76.583             < 0.001
+  prevalence               905/1747 (51.8%)   2494/4410 (56.55%) 692/1055 (65.59%) 189/261 (72.41%)                                           
+                                                                                                                                              
+BMI                                                                                                 ANOVA F-test (3, 7469 df) = 0.084  0.9688 
+  mean(SD)                 28.76 (7.31)       28.85 (6.74)       28.86 (6.89)      28.83 (5.99)                                               
+                                                                                                                                              
+CHF = YES                                                                                           Chisq. (3 df) = 51.648             < 0.001
+  prevalence               768/1747 (43.96%)  1509/4410 (34.22%) 381/1055 (36.11%) 92/261 (35.25%)                                            
+                                                                                                                                              
+Liver = YES                                                                                         Chisq. (3 df) = 8.44               0.0377 
+  prevalence               183/1747 (10.48%)  394/4410 (8.93%)   77/1055 (7.3%)    22/261 (8.43%)                                             
+                                                                                                                                              
+COPD = YES                                                                                          Chisq. (3 df) = 2.016              0.5691 
+  prevalence               551/1747 (31.54%)  1311/4410 (29.73%) 318/1055 (30.14%) 77/261 (29.5%)                                             
+                                                                                                                                              
+Renal = YES                                                                                         Chisq. (3 df) = 219.235            < 0.001
+  prevalence               663/1747 (37.95%)  996/4410 (22.59%)  188/1055 (17.82%) 33/261 (12.64%)                                            
+                                                                                                                                              
+Diabetes = YES                                                                                      Chisq. (3 df) = 58.262             < 0.001
+  prevalence               726/1747 (41.56%)  1485/4410 (33.67%) 314/1055 (29.76%) 68/261 (26.05%)                                            
+                                                                                                                                              
+charlson_comorbidity_index                                                                          ANOVA F-test (3, 7469 df) = 98.426 < 0.001
+  mean(SD)                 7.6 (2.54)         6.61 (2.3)         6.38 (2.17)       6.09 (2.07)                                                
+                                                                                                                                              
+apsiii                                                                                              ANOVA F-test (3, 7469 df) = 32.372 < 0.001
+  mean(SD)                 62.89 (25.99)      55.78 (26.48)      58.34 (25.86)     61.83 (28.42)                                              
+                                                                                                                                              
+sofa_score                                                                                          ANOVA F-test (3, 7469 df) = 15.351 < 0.001
+  mean(SD)                 4.02 (2.07)        3.71 (1.92)        3.61 (1.8)        3.48 (1.6)                                                 
+                                                                                                                                              
+wbc                                                                                                 ANOVA F-test (3, 7469 df) = 5.897  < 0.001
+  mean(SD)                 11.35 (7.21)       10.77 (5.65)       11.35 (5.83)      11.54 (6.34)                                               
+                                                                                                                                              
+creatinine                                                                                          ANOVA F-test (3, 7469 df) = 57.929 < 0.001
+  mean(SD)                 1.97 (1.67)        1.49 (1.26)        1.49 (1.03)       1.47 (0.76)                                                
+                                                                                                                                              
+bun                                                                                                 ANOVA F-test (3, 7469 df) = 95.882 < 0.001
+  mean(SD)                 40.05 (28.49)      29.35 (20.71)      30.21 (19.84)     32.2 (19.96)                                               
+                                                                                                                                              
+pt                                                                                                  ANOVA F-test (3, 7469 df) = 3.998  0.0074 
+  mean(SD)                 18.77 (10.59)      17.79 (9.65)       18.01 (10.7)      18.26 (11.3)                                               
+                                                                                                                                              
+ptt                                                                                                 ANOVA F-test (3, 7469 df) = 8.877  < 0.001
+  mean(SD)                 47.67 (32.16)      45.13 (29.02)      50 (35.49)        49.33 (35.45)                                              
+                                                                                                                                              
+ph                                                                                                  ANOVA F-test (3, 7469 df) = 18.907 < 0.001
+  mean(SD)                 7.32 (0.11)        7.31 (0.1)         7.29 (0.11)       7.29 (0.11)                                                
+                                                                                                                                              
+lactate                                                                                             ANOVA F-test (3, 7469 df) = 11.409 < 0.001
+  mean(SD)                 2.77 (2.34)        3 (2.27)           3.19 (2.34)       3.43 (2.45)                                                
+                                                                                                                                              
+RR                                                                                                  ANOVA F-test (3, 7469 df) = 29.213 < 0.001
+  mean(SD)                 19.74 (3.84)       19 (3.79)          19.98 (3.96)      19.9 (3.98)                                                
+                                                                                                                                              
+HR                                                                                                  ANOVA F-test (3, 7469 df) = 9.436  < 0.001
+  mean(SD)                 84.85 (15.16)      84.17 (14.01)      86.51 (16.18)     87.07 (17.35)                                              
+                                                                                                                                              
+MBP                                                                                                 ANOVA F-test (3, 7469 df) = 62.66  < 0.001
+  mean(SD)                 72.95 (8.44)       74.59 (8.37)       76.68 (9.1)       78.74 (10.17)                                              
+                                                                                                                                              
+po2                                                                                                 ANOVA F-test (3, 7469 df) = 12.737 < 0.001
+  mean(SD)                 95.77 (48.92)      98.65 (47.36)      90.38 (44.69)     86.75 (46.45)                                              
+                                                                                                                                              
+pco2                                                                                                ANOVA F-test (3, 7469 df) = 15.227 < 0.001
+  mean(SD)                 46.07 (14.06)      47.88 (12.74)      49.12 (15.25)     50.08 (15.66)                                              
+                                                                                                                                              
+T_max                                                                                               ANOVA F-test (3, 7469 df) = 1.213  0.3033 
+  mean(SD)                 37.44 (0.8)        37.45 (0.75)       37.48 (0.86)      37.51 (0.88)                                               
+                                                                                                                                              
+vaso                                                                                                ANOVA F-test (3, 7469 df) = 5.273  0.0012 
+  mean(SD)                 0.15 (0.35)        0.12 (0.32)        0.16 (0.36)       0.15 (0.35)                                                
+                                                                                                                                              
+sepsis_shock = YES                                                                                  Chisq. (3 df) = 19.479             < 0.001
+  prevalence               353/1747 (20.21%)  698/4410 (15.83%)  202/1055 (19.15%) 44/261 (16.86%)                                            
+                                                                                                                                              
+ventil = YES                                                                                        Chisq. (3 df) = 34.978             < 0.001
+  prevalence               1079/1747 (61.76%) 3002/4410 (68.07%) 744/1055 (70.52%) 192/261 (73.56%)   
